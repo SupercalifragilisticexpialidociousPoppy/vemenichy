@@ -7,90 +7,111 @@ import (
 	"time"
 )
 
-// Track holds the data for the song we want to play
 type Track struct {
-	ID       string
-	Title    string
-	Filepath string
+	ID       string `json:"id"`
+	Title    string `json:"title"`
+	Filepath string `json:"filepath"`
 }
 
 var (
-	queue      []Track
-	mu         sync.Mutex // The bouncer that protects the queue
-	currentCmd *exec.Cmd  // Keeps track of the active mpv process
+	queue        []Track
+	mu           sync.Mutex
+	currentCmd   *exec.Cmd
+	currentTrack *Track
+	ServerLogs   []string
 )
+
+// WebLog prints to the console AND saves it for the frontend terminal
+func WebLog(format string, a ...interface{}) {
+	msg := fmt.Sprintf(format, a...)
+	fmt.Println(msg)
+
+	mu.Lock()
+	defer mu.Unlock()
+	ServerLogs = append(ServerLogs, msg)
+	if len(ServerLogs) > 50 {
+		ServerLogs = ServerLogs[1:]
+	}
+}
+
+// GetLogs safely passes the log history to the API
+func GetLogs() []string {
+	mu.Lock()
+	defer mu.Unlock()
+	logsCopy := make([]string, len(ServerLogs))
+	copy(logsCopy, ServerLogs)
+	return logsCopy
+}
 
 // AddToQueue is called by your API when a download finishes
 func AddToQueue(track Track) {
-	mu.Lock() // Lock the queue so no one else can touch it
-	defer mu.Unlock()
-
+	mu.Lock()
 	queue = append(queue, track)
-	fmt.Printf("🎵 Added to queue: %s (Total in queue: %d)\n", track.Title, len(queue))
+	qLen := len(queue)
+	mu.Unlock() // Unlock early!
+
+	WebLog("🎵 Added to queue: %s (Total in queue: %d)", track.Title, qLen)
 }
 
 // StartDJ runs forever in the background
 func StartDJ() {
-	fmt.Println("🎧 DJ Module Loaded. Waiting for tracks...")
+	WebLog("🎧 DJ Module Loaded. Waiting for tracks...")
 
 	for {
 		mu.Lock()
-		// If queue is empty, unlock and chill for 1 second
 		if len(queue) == 0 {
 			mu.Unlock()
 			time.Sleep(1 * time.Second)
 			continue
 		}
 
-		// Pop the first track off the queue
 		nowPlaying := queue[0]
-		queue = queue[1:] // Reslice to remove the first element
+		queue = queue[1:]
+
+		// 🚨 THE FIX: Actually save the current track so the API can see it!
+		trackCopy := nowPlaying
+		currentTrack = &trackCopy
 		mu.Unlock()
 
-		fmt.Printf("▶️ Now Playing: %s\n", nowPlaying.Title)
+		WebLog("▶️ Now Playing: %s", nowPlaying.Title)
 
-		// 🚨 THE HACK: Boot mpv and force it to open a secret Windows Named Pipe
 		currentCmd = exec.Command("mpv",
 			"--no-video",
-			"--input-ipc-server=\\\\.\\pipe\\vemenichy", // Windows specific pipe
+			"--input-ipc-server=\\\\.\\pipe\\vemenichy",
 			nowPlaying.Filepath,
 		)
 
-		// Run() blocks the loop until the song finishes naturally (or is killed)
 		err := currentCmd.Run()
 		if err != nil {
-			// This will trigger when we intentionally kill the process to skip
-			fmt.Printf("⏹️ Track ended or skipped.\n")
+			WebLog("⏹️ Track ended or skipped.")
 		}
 
-		currentCmd = nil // Clear the command
+		mu.Lock()
+		currentCmd = nil
+		currentTrack = nil
+		mu.Unlock()
 	}
 }
 
-// Skip cleanly shuts down the current mpv instance via IPC so the loop grabs the next song
+// Skip cleanly shuts down the current mpv instance
 func Skip() {
 	mu.Lock()
-	defer mu.Unlock()
+	active := currentCmd != nil
+	mu.Unlock() // 🚨 FIX: Unlock before running commands/logs to prevent deadlocks
 
-	if currentCmd != nil {
-		fmt.Println("⏭️ Skipping track...")
-
-		// 🚨 THE CLEAN KILL: Use the IPC pipe to tell the engine to suicide
-		err := exec.Command("cmd", "/c", "echo quit > \\\\.\\pipe\\vemenichy").Run()
-		if err != nil {
-			fmt.Printf("🚨 Failed to send skip command: %v\n", err)
-		}
+	if active {
+		WebLog("⏭️ Skipping track...")
+		exec.Command("cmd", "/c", "echo quit > \\\\.\\pipe\\vemenichy").Run()
 	} else {
-		fmt.Println("⚠️ Nothing is currently playing.")
+		WebLog("⚠️ Nothing is currently playing.")
 	}
 }
 
-// GetQueue returns a safe copy of the current queue
+// GetQueue returns a safe copy of the current queue (Restored!)
 func GetQueue() []Track {
 	mu.Lock()
 	defer mu.Unlock()
 
-	// Return a copy so the API doesn't accidentally modify the real queue
 	queueCopy := make([]Track, len(queue))
 	copy(queueCopy, queue)
 	return queueCopy
@@ -99,17 +120,36 @@ func GetQueue() []Track {
 // TogglePause sends the spacebar equivalent to mpv via IPC
 func TogglePause() {
 	mu.Lock()
+	active := currentCmd != nil && currentCmd.Process != nil
+	mu.Unlock() // 🚨 FIX: Unlock before running commands/logs
+
+	if active {
+		WebLog("⏯️ Toggling Play/Pause...")
+		exec.Command("cmd", "/c", "echo cycle pause > \\\\.\\pipe\\vemenichy").Run()
+	} else {
+		WebLog("⚠️ Nothing is currently playing.")
+	}
+}
+
+// GetStatus returns current song and queue
+func GetStatus() (*Track, []Track) {
+	mu.Lock()
 	defer mu.Unlock()
 
-	if currentCmd != nil && currentCmd.Process != nil {
-		fmt.Println("⏯️ Toggling Play/Pause...")
+	queueCopy := make([]Track, len(queue))
+	copy(queueCopy, queue)
 
-		// 🚨 THE INJECTION: Use Windows CMD to echo the command into mpv's pipe
-		err := exec.Command("cmd", "/c", "echo cycle pause > \\\\.\\pipe\\vemenichy").Run()
-		if err != nil {
-			fmt.Printf("🚨 Failed to send pause command: %v\n", err)
-		}
-	} else {
-		fmt.Println("⚠️ Nothing is currently playing.")
+	return currentTrack, queueCopy
+}
+
+// SetVolume uses the IPC pipe to change mpv's volume
+func SetVolume(level string) {
+	mu.Lock()
+	active := currentCmd != nil
+	mu.Unlock()
+
+	if active {
+		cmdStr := fmt.Sprintf("echo set volume %s > \\\\.\\pipe\\vemenichy", level)
+		exec.Command("cmd", "/c", cmdStr).Run()
 	}
 }

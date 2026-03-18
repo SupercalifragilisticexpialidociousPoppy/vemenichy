@@ -12,9 +12,15 @@ func NewRouter() *http.ServeMux {
 	mux.HandleFunc("/search", HandleSearch)
 	mux.HandleFunc("/download", HandleDownload)
 
+	mux.HandleFunc("/queue", HandleGetQueue)
+	mux.HandleFunc("/status", HandleStatus)
+	mux.HandleFunc("/logs", HandleLogs)
+
 	mux.HandleFunc("/pause", HandlePause)
 	mux.HandleFunc("/skip", HandleSkip)
-	mux.HandleFunc("/queue", HandleGetQueue)
+	mux.HandleFunc("/volume", HandleVolume)
+
+	mux.Handle("/", http.FileServer(http.Dir("./../../front/design_testing")))
 
 	return mux
 }

@@ -126,58 +126,49 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 
 // 4. Download that bitch.
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
-	// 1. Grab the URL from the request
 	targetURL := r.URL.Query().Get("url")
-	if targetURL == "" {
-		http.Error(w, "Missing 'url' parameter", http.StatusBadRequest)
-		return
+	trackTitle := r.URL.Query().Get("title") // Grabbing the real title!
+
+	if trackTitle == "" || trackTitle == "undefined" {
+		trackTitle = "Unknown Track"
 	}
 
-	// 2. Extract the track ID so we know what to name the file
 	trackID := r.URL.Query().Get("v")
-	if trackID == "" {
-		// Quick fallback: if 'v' wasn't passed directly, try to rip it out of the YouTube URL
-		if strings.Contains(targetURL, "v=") {
-			parts := strings.Split(targetURL, "v=")
-			trackID = strings.Split(parts[1], "&")[0]
-		} else {
-			trackID = "unknown_id"
-		}
+	if trackID == "" && strings.Contains(targetURL, "v=") {
+		parts := strings.Split(targetURL, "v=")
+		trackID = strings.Split(parts[1], "&")[0]
 	}
 
-	// 3. Prepare the yt-dlp command BEFORE the goroutine so it knows what to run
+	// 🚨 THE DISGUISE & COOKIE BYPASS
 	cmd := exec.Command("yt-dlp",
-		"-x",                    // Extract audio only
-		"--audio-format", "mp3", // Force it into an mp3
-		"-o", "sessions/%(id)s.%(ext)s", // Save it in the sessions folder as ID.mp3
+		"--cookies", "cookies.txt",
+		"-x",
+		"--audio-format", "mp3",
+		"-o", "sessions/%(id)s.%(ext)s",
 		targetURL,
 	)
 
-	// 4. 🚨 Spawn the background worker to handle the heavy lifting!
 	go func() {
-		fmt.Printf("📥 Downloading track: %s...\n", trackID)
+		player.WebLog("📥 Downloading: %s", trackTitle)
 
-		// Block this specific background thread until yt-dlp AND ffmpeg finish
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			fmt.Printf("🚨 Download failed: %v\n📜 RAW ERROR:\n%s\n", err, string(output))
-			return // Kills this worker, song never queues
+			player.WebLog("🚨 Download failed: %v\n📜 RAW ERROR:\n%s", err, string(output))
+			return
 		}
 
-		fmt.Println("✅ Download complete! Handing over to DJ...")
+		player.WebLog("✅ Download complete! Sending to DJ...")
 
-		// Now that the file is 100% written to the disk, it is safe to queue
 		newTrack := player.Track{
 			ID:       trackID,
-			Title:    "Track " + trackID, // You can parse the real title later if you want
+			Title:    trackTitle, // 🚨 The Ghost is dead. Real title is injected here.
 			Filepath: fmt.Sprintf("sessions/%s.mp3", trackID),
 		}
 		player.AddToQueue(newTrack)
 	}()
 
-	// 5. 🚨 Respond to the frontend IMMEDIATELY so the browser doesn't freeze
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status": "success", "message": "Download started and will be queued shortly"}`))
+	w.Write([]byte(`{"status": "success", "message": "Download started"}`))
 }
 
 // HandleSkip aggressively kills the current track to trigger the next one
@@ -220,4 +211,30 @@ func HandlePause(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status": "success", "message": "Playback toggled"}`))
+}
+
+// HandleStatus returns the currently playing track and the queue
+func HandleStatus(w http.ResponseWriter, r *http.Request) {
+	nowPlaying, currentQueue := player.GetStatus()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"now_playing": nowPlaying,
+		"queue":       currentQueue,
+	})
+}
+
+// HandleVolume changes the player volume
+func HandleVolume(w http.ResponseWriter, r *http.Request) {
+	level := r.URL.Query().Get("v")
+	if level != "" {
+		player.SetVolume(level)
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func HandleLogs(w http.ResponseWriter, r *http.Request) {
+	logs := player.GetLogs()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"logs": logs})
 }
