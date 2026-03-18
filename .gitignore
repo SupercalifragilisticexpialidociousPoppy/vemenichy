@@ -5,7 +5,9 @@ dj-server.exe
 # Local downloads.
 *.mp3
 *.wav
+*.jpg
 
 # API Keys and shit
 .env
 back/plot.md
+front/themes
