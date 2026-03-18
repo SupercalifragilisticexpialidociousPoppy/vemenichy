@@ -1,0 +1,81 @@
+#full_scr {
+    z-index: 1;
+    height: 100vh;
+    width: 100vw;
+    padding-left: 24vw;
+    padding-right: 24vw;
+
+    position: fixed; 
+    display: none; 
+
+    background-color: #fafafa; 
+    color: #111111;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+#full_scr_details {
+    display: none;
+    width: 100%;
+    overflow: hidden; /* Added to contain the scrolling text */
+}
+#top_text, #mid_text, #artist, #track_no, #song {
+    font-weight: bold;
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+    overflow: hidden;
+    overflow-x: auto;
+    display: block;
+    transform-origin: left;
+    transform: scaleX(0.75);
+}
+#top_text {
+    padding-top: 5vh;
+    font-size: 10vh;
+}
+#mid_text {
+    font-size: 12.5vh;
+}
+#song {
+    font-size: clamp(1rem, 18.75vh, 18.75vh);
+    display: inline-block;
+    width: max-content;
+    animation: song-bounce 8s linear infinite alternate;
+}
+#track_no {
+    font-size: 10vh;
+    padding-top: 5vh;
+}
+#artist {
+    font-size: clamp(1rem, 15cqw, 12.5vh);
+    transform-origin: right;
+    text-align: right;
+    width: max-content;
+    min-width: 100%;
+    display: inline-block;
+    animation: artist-bounce 8s linear infinite alternate;
+}
+#pause {
+    display: none;
+    color: #111111;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 90vh;
+    transform: scaleX(0.27);
+}
+#top_text, #mid_text, #song, #pause {
+    font-family: 'Times New Roman', Times, serif;
+}
+#track_no, #artist {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Keyframes for the bounce effect */
+@keyframes song-bounce {
+    0% { transform: scaleX(0.75) translateX(0%); }
+    100% { transform: scaleX(0.75) translateX(-20%); }
+}
+
+@keyframes artist-bounce {
+    0% { transform: scaleX(0.75) translateX(0%); }
+    100% { transform: scaleX(0.75) translateX(20%); }
+}

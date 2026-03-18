@@ -1,0 +1,86 @@
+/* Styling the tiles within the dashboard */
+.track_tile {
+    padding: 20px;
+    border-bottom: 1px solid #111111;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    height: 108px;
+}
+
+.line1, .line3 {
+    display: flex;
+    justify-content: space-between;
+    font-family: Arial, sans-serif;
+    font-size: 0.7rem;
+    font-weight: bold;
+    opacity: 0.6;
+}
+
+.song_name {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1.8rem;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transform: scaleX(0.9); /* Slight squish to match your vibe */
+    transform-origin: left;
+}
+
+/* Specific styling for the Now Playing tile */
+#current_track_tile .track_tile {
+    background-color: #111111;
+    color: #ffffff;
+}
+
+#current_track_tile {
+    opacity: 0.9;
+}
+
+/* Specific styling for the Up Next tile */
+#next_track_tile .track_tile {
+    background-color: rgba(0,0,0,0.05);
+    border: 1px dashed #111111;
+}
+
+#controls {
+    height: 280px;
+    text-align: center;
+    padding: 20px;
+}
+
+#controls button {
+    width: 100%;
+}
+
+#pause_track {
+    height: 35px;
+    margin: 10px;
+    align-content: center;
+    display: block;
+}
+#skip_track {
+    height: 35px;
+    margin: 10px;
+    align-content: center;
+    display: block;
+}
+#volume {
+    height: 35px;
+    margin: 10px;
+    align-content: center;
+    display: block;
+}
+#reorder_tracklist {
+    height: 35px;
+    margin: 10px;
+    align-content: center;
+    display: block;
+}
+#delete_track {
+    height: 35px;
+    margin: 10px;
+    align-content: center;
+    display: block;
+}

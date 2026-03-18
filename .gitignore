@@ -1,0 +1,11 @@
+# Compiled go library
+dj-server
+dj-server.exe
+
+# Local downloads.
+*.mp3
+*.wav
+
+# API Keys and shit
+.env
+back/plot.md

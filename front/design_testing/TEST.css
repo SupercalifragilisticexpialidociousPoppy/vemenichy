@@ -1,0 +1,50 @@
+/* --- TRACK TILE STYLES --- */
+
+.track_tile {
+    padding: 15px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #111111;
+    background: rgba(255, 255, 255, 0.5); /* Slight glass effect */
+    transition: background 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.track_tile:hover {
+    background: rgba(17, 17, 17, 0.05);
+    cursor: pointer;
+}
+
+/* Line 1: Track No and Artist */
+.line1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-family: Arial, sans-serif;
+    color: #111111;
+}
+
+.track_no {
+    font-weight: bold;
+}
+
+.artist_name {
+    letter-spacing: 0.05em;
+}
+
+/* Line 2: Song Name */
+.line2 {
+    margin: 2px 0;
+}
+
+.song_name {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1.4rem;
+    color: #111111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Keeps it tidy in the list */
+}
