@@ -1,11 +1,13 @@
 # Compiled go library
 dj-server
 dj-server.exe
+back/go_stuff/cookies.txt
 
 # Local downloads.
 *.mp3
 *.wav
 *.jpg
+*.heic
 
 # API Keys and shit
 .env

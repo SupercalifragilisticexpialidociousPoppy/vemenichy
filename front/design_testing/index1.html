@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vemenichy! (Barebones)</title>
+    <style>
+        /* Just enough CSS so your eyes don't bleed */
+        body { font-family: monospace; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .control-panel { background: #eee; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        .result-card { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        button { cursor: pointer; padding: 5px 10px; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #statusDisplay { color: green; font-weight: bold; margin-top: 10px; }
+        .terminal { 
+            background: #1e1e1e; color: #00ff00; font-family: 'Courier New', Courier, monospace; 
+            padding: 10px; height: 200px; overflow-y: scroll; border-radius: 5px; 
+            margin-top: 20px; font-size: 0.85em; white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎧 vemenichy!</h1>
+
+    <div class="control-panel">
+        <h2 id="nowPlayingDisplay" style="color: #d9534f; margin-top: 0;">Now Playing: Nothing</h2>
+        
+        <button onclick="togglePause()">⏯️ Play / Pause</button>
+        <button onclick="skipTrack()">⏭️ Skip Track</button>
+        
+        <div style="margin-top: 15px;">
+            <label for="volumeSlider">🔈 Volume: </label>
+            <input type="range" id="volumeSlider" min="0" max="100" value="100" onchange="changeVolume(this.value)">
+        </div>
+
+        <div id="statusDisplay">Server ready.</div>
+        <div id="queueDisplay" style="margin-top: 10px; font-size: 0.9em; color: #555;">Queue: 0 tracks</div>
+    </div>
+
+    <div>
+        <input type="text" id="searchInput" placeholder="Search for a song..." style="width: 70%; padding: 5px;">
+        <button onclick="searchYouTube()">Search</button>
+    </div>
+
+    <div id="resultsContainer" style="margin-top: 20px;"></div>
+    <div class="terminal" id="terminalBox">Waiting for server logs...</div>
+
+    <script>
+    // --- 1. SEARCH LOGIC ---
+        async function searchYouTube() {
+            const query = document.getElementById('searchInput').value;
+            const container = document.getElementById('resultsContainer');
+            if (!query) return;
+
+            container.innerHTML = "<em>Searching...</em>";
+
+            try {
+                const response = await fetch(`/search?source=yt&q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                container.innerHTML = "";
+
+                data.forEach(track => {
+                    const title = track.title || track.fulltitle || "Unknown Title";
+                    const url = track.webpage_url || `https://www.youtube.com/watch?v=${track.id}`;
+
+                    const card = document.createElement('div');
+                    card.className = 'result-card';
+                    
+                    const titleSpan = document.createElement('span');
+                    titleSpan.innerText = title;
+                    
+                    const playBtn = document.createElement('button');
+                    playBtn.innerText = "⬇️ Play";
+                    // Pass the real title into the function!
+                    playBtn.onclick = () => downloadAndPlay(playBtn, url, title);
+
+                    card.appendChild(titleSpan);
+                    card.appendChild(playBtn);
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                container.innerHTML = `<span style="color:red">Search failed: ${error.message}</span>`;
+            }
+        }
+
+        // --- 2. DOWNLOAD & QUEUE LOGIC ---
+        async function downloadAndPlay(buttonElement, trackUrl, trackTitle) {
+            buttonElement.disabled = true;
+            buttonElement.innerText = "⏳ Downloading...";
+            document.getElementById('statusDisplay').innerText = "Downloading track in background...";
+
+            try {
+                // 🚨 NEW: Send the title directly in the URL!
+                const safeUrl = encodeURIComponent(trackUrl);
+                const safeTitle = encodeURIComponent(trackTitle);
+                const response = await fetch(`/download?url=${safeUrl}&title=${safeTitle}`);
+                const result = await response.json();
+
+                buttonElement.innerText = "✅ Queued!";
+                document.getElementById('statusDisplay').innerText = result.message;
+            } catch (error) {
+                buttonElement.innerText = "❌ Failed";
+                buttonElement.disabled = false;
+            }
+        }
+
+        // --- 3. PLAYER CONTROLS ---
+        async function togglePause() {
+            await fetch('/pause');
+            document.getElementById('statusDisplay').innerText = "Playback toggled.";
+        }
+
+        async function skipTrack() {
+            await fetch('/skip');
+            document.getElementById('statusDisplay').innerText = "Track skipped.";
+        }
+
+        async function refreshQueue() {
+            const response = await fetch('/queue');
+            const data = await response.json();
+            console.log("Current Queue:", data.queue);
+            document.getElementById('statusDisplay').innerText = `Tracks in queue: ${data.queue.length}`;
+        }
+
+        // --- VOLUME CONTROL ---
+        async function changeVolume(level) {
+            await fetch(`/volume?v=${level}`);
+            document.getElementById('statusDisplay').innerText = `Volume set to ${level}%`;
+        }
+
+        // --- BACKGROUND HEARTBEAT (The Sync) ---
+// --- BACKGROUND HEARTBEAT (The Sync & Queue Display) ---
+async function fetchStatus() {
+            // --- 1. FETCH MUSIC PLAYER STATUS ---
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                // Update Now Playing (Checking both lowercase and uppercase to be safe!)
+                const npDisplay = document.getElementById('nowPlayingDisplay');
+                if (data.now_playing) {
+                    const title = data.now_playing.title || data.now_playing.Title || "Unknown Track";
+                    npDisplay.innerText = `🎶 Now Playing: ${title}`;
+                } else {
+                    npDisplay.innerText = "Now Playing: Nothing";
+                }
+
+                // Update Queue
+                const qDisplay = document.getElementById('queueDisplay');
+                if (data.queue && data.queue.length > 0) {
+                    const listItems = data.queue.map((track) => {
+                        const t = track.title || track.Title || track.id;
+                        return `<li>${t}</li>`;
+                    }).join('');
+                    qDisplay.innerHTML = `<strong>Upcoming Queue:</strong><ol>${listItems}</ol>`;
+                } else {
+                    qDisplay.innerHTML = `<span style="color: #888;">Queue is empty.</span>`;
+                }
+            } catch (error) {
+                console.error("🚨 Player Status API failed:", error);
+            }
+
+            // --- 2. FETCH TERMINAL LOGS (Separated!) ---
+            try {
+                const logResponse = await fetch('/logs');
+                const logData = await logResponse.json();
+                
+                const terminal = document.getElementById('terminalBox');
+                if (logData.logs && logData.logs.length > 0) {
+                    const currentLogText = logData.logs.join('\n');
+                    if (terminal.innerText !== currentLogText) {
+                        terminal.innerText = currentLogText;
+                        terminal.scrollTop = terminal.scrollHeight; // Auto-scroll
+                    }
+                }
+            } catch (error) {
+                console.error("🚨 Terminal Logs API failed:", error);
+            }
+        }
+
+        // Run the heartbeat every 2 seconds
+        setInterval(fetchStatus, 2000);
+        // Run it once immediately on load
+        fetchStatus();
+    </script>
+</body>
+</html>

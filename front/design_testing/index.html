@@ -4,134 +4,583 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>vemenichy!</title>
-    <link rel="stylesheet" href="dashboard.css">
-    <link rel="stylesheet" href="full_scr.css">
-    <link rel="stylesheet" href="track_template.css">
-    <!-- <link rel="stylesheet" href="light.css"> -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=delete" />
+    <style>
+        /* --- BASE STYLES & RESET --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        ::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for Chrome, Safari and Opera */
+        }
+
+        body {
+            height: 100vh;
+            width: 100vw;
+            background-color: #ffffff;
+            color: #111111;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        /* --- HEADER (Logs + Title) --- */
+        #header_area {
+            display: flex;
+            justify-content: space-between;
+            width: 100vw;
+            height: 140px;
+            margin-top: 40px;
+            padding: 0 4vw;
+            margin-bottom: 50px;
+        }
+
+        /* Terminal Logs (Top Left) */
+        #logs_container {
+            width: 40%;
+            height: 100%;
+            background-color: #111111;
+            color: #fafafa;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            padding: 10px;
+            border: 2px solid #111111;
+            white-space: pre-wrap;
+            display: flex;
+            flex-direction: column-reverse; /* Auto-scrolls to bottom naturally */
+        }
+
+        /* Title Area (Top Right) */
+        #gimme_head {
+            text-align: right;
+            align-content: end;
+        }
+        #title_text {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: -0.05em;
+        }
+        #raspi_status {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            font-weight: bold;
+        }
+
+        /* --- MAIN DASHBOARD GRID --- */
+        .dashboard {
+            display: grid;
+            height: 400px;
+            margin: 0 4vw;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            justify-items: stretch;
+        }
+
+        /* Grid Hover Behaviors */
+        .grid_cell {
+            padding: 15px;
+            transition: opacity 0.3s ease, border 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid transparent;
+        }
+
+        /* Cell 1: Uneditable Tracks */
+        .uneditable_tracks {
+            opacity: 1; /* Always visible */
+            border: 2px solid #111111;
+            padding: 0; /* Let the tile fill it */
+        }
+        #controls {
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .uneditable_tracks:hover #controls {
+            opacity: 1;
+            height: auto;
+            padding: 20px;
+        }
+
+        /* Cell 2 & 3: Queue & Search */
+        .track_list_area, .search_api {
+            opacity: 0;
+        }
+        .track_list_area:hover, .search_api:hover {
+            opacity: 1;
+            border: 2px solid #111111;
+        }
+
+        /* --- TRACK TILE TEMPLATE --- */
+        .track_tile {
+            padding: 20px;
+            border-bottom: 1px solid #111111;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background-color: #111111;
+            color: #ffffff;
+            height: 120px;
+        }
+        .line1, .line3 {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            font-weight: bold;
+            opacity: 0.6;
+        }
+        .song_name {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 1.5rem;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transform: scaleX(0.9);
+            transform-origin: left;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* --- CONTROLS BUTTONS --- */
+        button {
+            background: transparent;
+            border: 1px solid #111111;
+            color: #111111;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        button:hover {
+            background: #111111;
+            color: #ffffff;
+        }
+        .control_btn {
+            width: 100%;
+            height: 35px;
+            margin-bottom: 10px;
+        }
+        .controls_line {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* --- QUEUE LIST --- */
+        #track_list_header {
+            font-weight: bold;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #111111;
+            padding-bottom: 5px;
+        }
+        .queue_item {
+            font-size: 0.85rem;
+            padding: 8px 0;
+            border-bottom: 1px dashed #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- SEARCH UI --- */
+        .search-box {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        #search_input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #111111;
+            font-family: monospace;
+            outline: none;
+        }
+        #search_sources {
+            display: flex;
+            gap: 10px;
+        }
+        .source-btn {
+            flex: 1;
+            padding: 8px;
+        }
+        .result-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed #ccc;
+            font-size: 0.85rem;
+        }
+        .result-card button {
+            padding: 5px 10px;
+            font-size: 0.7rem;
+        }
+
+        /* --- SHORTCUTS GUIDE --- */
+        #shortcuts_guide {
+            position: absolute;
+            bottom: 20px;
+            width: 100vw;
+            padding: 0 4vw;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            font-family: monospace;
+            opacity: 0.5;
+        }
+        .shortcut-item span {
+            font-weight: bold;
+            border: 1px solid #111111;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+
+        /* --- FULL SCREEN MODE --- */
+        #full_scr {
+            z-index: 100;
+            height: 100vh;
+            width: 100vw;
+            padding: 0 24vw;
+            position: fixed; 
+            top: 0;
+            left: 0;
+            display: none; 
+            background-color: #ffffff; 
+            color: #111111;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #full_scr_details {
+            width: 100%;
+            overflow: hidden;
+        }
+        #top_text, #mid_text, #fs_artist, #fs_track_no, #fs_song {
+            font-weight: bold;
+            letter-spacing: -0.05em;
+            white-space: nowrap;
+            overflow: hidden;
+            display: block;
+            transform-origin: left;
+            transform: scaleX(0.75);
+        }
+        #top_text { padding-top: 5vh; font-size: 10vh; font-family: 'Times New Roman', Times, serif;}
+        #mid_text { font-size: 12.5vh; font-family: 'Times New Roman', Times, serif;}
+        #fs_song {
+            font-size: 18.75vh;
+            font-family: 'Times New Roman', Times, serif;
+            display: inline-block;
+            width: max-content;
+            animation: song-bounce 8s linear infinite alternate;
+        }
+        #fs_track_no { font-size: 10vh; padding-top: 5vh; }
+        #fs_artist {
+            font-size: 12.5vh;
+            transform-origin: right;
+            text-align: right;
+            width: max-content;
+            min-width: 100%;
+            display: inline-block;
+            animation: artist-bounce 8s linear infinite alternate;
+        }
+        #pause_overlay {
+            display: none;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 50vh;
+            transform: scaleX(0.5);
+        }
+
+        @keyframes song-bounce {
+            0% { transform: scaleX(0.75) translateX(0%); }
+            100% { transform: scaleX(0.75) translateX(-20%); }
+        }
+        @keyframes artist-bounce {
+            0% { transform: scaleX(0.75) translateX(0%); }
+            100% { transform: scaleX(0.75) translateX(20%); }
+        }
+    </style>
 </head>
 <body>
-    <div id = "gimme_head">
-        <div id="title_text">vemenichy!</div>
-        <div id="raspi_status">Offline</div>
-        <!-- <div id="output_device">
-            <button id="output_device_menu_button">Output</button>
-        </div> -->
+
+    <div id="header_area">
+        <div id="logs_container">Waiting for server logs...</div>
+        <div id="gimme_head">
+            <div id="title_text">vemenichy!</div>
+            <div id="raspi_status">SYSTEM ONLINE</div>
+        </div>
     </div>
 
-    <div class = "dashboard">
-        <div class="uneditable_tracks">
-            <div id="current_track">
-                <div id="current_track_tile">   
-                    <div class="track_tile current">
-                        <div class="line1">
-                            <div class="track_no">TRACK 01</div>
-                            <div class="artist_name">ARTIST01</div>
-                        </div>
-                        <div class="line2">
-                            <div class="song_name">TRACK01</div>
-                        </div>
-                        <div class="line3">
-                            <div class="source">SOUNDCLOUD</div>
-                            <div class="track_length">03:45</div>
-                        </div>
+    <div class="dashboard">
+        
+        <div class="grid_cell uneditable_tracks">
+            <div id="current_track_tile">
+                <div class="track_tile current">
+                    <div class="line1">
+                        <div class="track_no">NOW PLAYING</div>
+                        <div class="artist_name" id="np_artist">--</div>
                     </div>
-                </div>
-                
-                <div id="controls">
-                    <div id="controls_line1">
-                        <button id="pause_track"> PAUSE </button>
-                        <button id="skip_track"> SKIP </button>
-                        <button id="volume"> VOLUME </button>
+                    <div class="line2">
+                        <div class="song_name" id="np_song">NOTHING</div>
                     </div>
-                    <div id="controls_line2"> 
-                        <button id="reorder_tracklist"> SWAP </button>
-                        <button id="delete_track"> DELETE </button>
+                    <div class="line3">
+                        <div class="source">SERVER</div>
+                        <div class="track_length">--:--</div>
                     </div>
                 </div>
             </div>
-
-            <div id="up_next">
-                <div id="next_track_tile">
-                    <div class="track_tile next">
-                        <div class="line1">
-                            <div class="track_no">TRACK 02</div>
-                            <div class="artist_name">SOME OTHER DUDE</div>
-                        </div>
-                        <div class="line2">
-                            <div class="song_name">THE NEXT TRACK IN LINE</div>
-                        </div>
-                        <div class="line3">
-                            <div class="source">YOUTUBE</div>
-                            <div class="track_length">04:20</div>
-                        </div>
-                    </div>
+            
+            <div id="controls">
+                <button class="control_btn" onclick="togglePause()">⏯️ PAUSE / PLAY</button>
+                <button class="control_btn" onclick="skipTrack()">⏭️ SKIP TRACK</button>
+                <div class="controls_line">
+                    <button class="control_btn" onclick="changeVolume('down')">🔉 VOL -</button>
+                    <button class="control_btn" onclick="changeVolume('up')">🔊 VOL +</button>
+                </div>
+                <div class="controls_line">
+                    <button class="control_btn" style="opacity: 0.3; cursor: not-allowed;">SWAP (WIP)</button>
+                    <button class="control_btn" style="opacity: 0.3; cursor: not-allowed;">DELETE (WIP)</button>
                 </div>
             </div>
         </div>
 
-        <div class="track_list_area">\
+        <div class="grid_cell track_list_area">
             <div id="track_list_header">Queue</div>
-            <div id="track_list"></div>
+            <div id="queueDisplay">
+                <div style="color: #888; font-size: 0.8rem;">Queue is empty.</div>
+            </div>
         </div>
 
-        <div class="search_api">\
+        <div class="grid_cell search_api">
             <div class="search-box">
-                <input type="text" id="search_input" placeholder="Paste URL or Search...">
+                <input type="text" id="searchInput" placeholder="Search for a song...">
                 <div id="search_sources">
-                    <button class="source-btn" data-source="yt">YT</button>
-                    <button class="source-btn" data-source="sc">SC</button>
-                    <button class="source-btn" data-source="sp">SP</button>
+                    <button class="source-btn" onclick="searchMusic('yt')">YouTube</button>
+                    <button class="source-btn" onclick="searchMusic('sc')">SoundCloud</button>
                 </div>
             </div>
+            <div id="resultsContainer"></div>
         </div>
-    </div>
-    <template id="track_template">
-        <div class="track_tile">\
-            <div class="line1">
-                <div class="track_no">Track number</div>
-                <div class="artist_name">Artist name</div>
-            </div>
-            <div class="line2">
-                <div class="song_name">Song name</div>
-            </div>
-            <div class="line3">
-                <div class="source">SoundClound</div>
-                <div class="track_length">--:--</div>
-            </div>
-        </div>
-    </template>
 
-    <div id="device_status_area">
-        will be implemented later, keep display none
-        <div class="section-label">
-            <span>SYSTEM AUDIO & CABLE STATUS</span>
-            <button id="refresh_devices_btn" onclick="fetchDeviceStatus()">
-                <i class="fa-solid fa-rotate-right"></i> Refresh
-            </button>
-        </div>
-        <div id="output_device">
-            Loading hardware info...
-        </div>
     </div>
 
-    <div id="theme">
-        will be implemented later, keep display none
+    <div id="shortcuts_guide">
+        <div class="shortcut-item"><span>K</span> Play/Pause</div>
+        <div class="shortcut-item"><span>F11</span> Fullscreen</div>
+        <div class="shortcut-item"><span>V</span> Volume</div>
+        <div class="shortcut-item"><span>N</span> Skip</div>
+        <div class="shortcut-item"><span>Q</span> Swap Queue</div>
+        <div class="shortcut-item"><span>X</span> Delete Track</div>
+        <div class="shortcut-item"><span>C</span> Credits</div>
+        <div class="shortcut-item"><span>P</span> Ping Pi</div>
     </div>
 
     <div id="full_scr">
         <div id="full_scr_details">
-            <div id="top_text">VEMENICHY! v0.1</div>
+            <div id="top_text">VEMENICHY! v0.2</div>
             <div id="mid_text">NOW PLAYING:</div>
-            <div id="song">NOTHING</div>
-            <div id="track_no">TRACK: 404</div>        
-            <div id="artist">CUE A SONG IDIOT!</div>
+            <div id="fs_song">NOTHING</div>
+            <div id="fs_track_no">STATUS: LIVE</div>        
+            <div id="fs_artist">WAITING FOR TRACK...</div>
         </div>
-        <div id="pause">
-            PAUSED
-        </div>
+        <div id="pause_overlay">PAUSED</div>
     </div>
 
-    <script src="vemenichy.js"></script>
+    <script>
+        // --- STATE VARIABLES ---
+        let fullscreen = false;
+        let stream_paused = false;
+        let isTyping = false;
+        let currentVol = 100;
+        let currentSongTitle = "NOTHING";
+
+        // Prevent shortcuts from firing when typing in the search box
+        document.getElementById('searchInput').addEventListener('focus', () => isTyping = true);
+        document.getElementById('searchInput').addEventListener('blur', () => isTyping = false);
+
+        // --- 1. SEARCH & DOWNLOAD LOGIC ---
+        async function searchMusic(source) {
+            const query = document.getElementById('searchInput').value;
+            const container = document.getElementById('resultsContainer');
+            if (!query) return;
+
+            container.innerHTML = "<em>Searching " + (source === 'yt' ? 'YouTube' : 'SoundCloud') + "...</em>";
+
+            try {
+                // We'll pass the source to your backend, even if it currently defaults to YT
+                const response = await fetch(`/search?source=${source}&q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                container.innerHTML = "";
+
+                data.forEach(track => {
+                    const title = track.title || track.fulltitle || "Unknown Title";
+                    const url = track.webpage_url || `https://www.youtube.com/watch?v=${track.id}`;
+
+                    const card = document.createElement('div');
+                    card.className = 'result-card';
+                    
+                    const titleSpan = document.createElement('span');
+                    titleSpan.innerText = title;
+                    
+                    const playBtn = document.createElement('button');
+                    playBtn.innerText = "⬇️ QUEUE";
+                    playBtn.onclick = () => downloadAndPlay(playBtn, url, title);
+
+                    card.appendChild(titleSpan);
+                    card.appendChild(playBtn);
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                container.innerHTML = `<span style="color:red">Search failed.</span>`;
+            }
+        }
+
+        async function downloadAndPlay(buttonElement, trackUrl, trackTitle) {
+            buttonElement.disabled = true;
+            buttonElement.innerText = "⏳...";
+            try {
+                const safeUrl = encodeURIComponent(trackUrl);
+                const safeTitle = encodeURIComponent(trackTitle);
+                await fetch(`/download?url=${safeUrl}&title=${safeTitle}`);
+                buttonElement.innerText = "✅";
+            } catch (error) {
+                buttonElement.innerText = "❌";
+                buttonElement.disabled = false;
+            }
+        }
+
+        // --- 2. PLAYER CONTROLS ---
+        async function togglePause() {
+            stream_paused = !stream_paused;
+            await fetch('/pause');
+            updateFullscreenUI();
+        }
+
+        async function skipTrack() {
+            await fetch('/skip');
+        }
+
+        async function changeVolume(direction) {
+            if (direction === 'up' && currentVol < 100) currentVol += 10;
+            if (direction === 'down' && currentVol > 0) currentVol -= 10;
+            await fetch(`/volume?v=${currentVol}`);
+        }
+
+        // --- 3. BACKGROUND HEARTBEAT (Sync UI & Logs) ---
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                // Update Now Playing Tile
+                if (data.now_playing) {
+                    currentSongTitle = data.now_playing.title || data.now_playing.Title || "Unknown Track";
+                    document.getElementById('np_song').innerText = currentSongTitle;
+                    document.getElementById('fs_song').innerText = currentSongTitle.toUpperCase();
+                } else {
+                    currentSongTitle = "NOTHING";
+                    document.getElementById('np_song').innerText = "NOTHING";
+                    document.getElementById('fs_song').innerText = "NOTHING";
+                }
+
+                // Update Queue List
+                const qDisplay = document.getElementById('queueDisplay');
+                if (data.queue && data.queue.length > 0) {
+                    const listItems = data.queue.map((track, index) => {
+                        const t = track.title || track.Title || track.id;
+                        return `<div class="queue_item">${index + 1}. ${t}</div>`;
+                    }).join('');
+                    qDisplay.innerHTML = listItems;
+                } else {
+                    qDisplay.innerHTML = `<div style="color: #888; font-size: 0.8rem;">Queue is empty.</div>`;
+                }
+            } catch (error) {}
+
+            // Fetch Logs
+            try {
+                const logResponse = await fetch('/logs');
+                const logData = await logResponse.json();
+                const terminal = document.getElementById('logs_container');
+                if (logData.logs && logData.logs.length > 0) {
+                    // Reverse the array so newest logs are at the top, pushing old ones down
+                    const reversedLogs = [...logData.logs].reverse(); 
+                    const currentLogText = reversedLogs.join('\n');
+                    if (terminal.innerText !== currentLogText) {
+                        terminal.innerText = currentLogText;
+                    }
+                }
+            } catch (error) {}
+        }
+
+        // --- 4. FULLSCREEN & KEYBOARD LOGIC ---
+        function updateFullscreenUI() {
+            const details = document.getElementById('full_scr_details');
+            const pauseElement = document.getElementById('pause_overlay');
+
+            if (stream_paused) {
+                details.style.display = 'none';
+                pauseElement.style.display = 'block';
+            } else {
+                details.style.display = 'block';
+                pauseElement.style.display = 'none';
+            }
+        }
+
+        function toggleFullscreen() {
+            const fullScr = document.getElementById('full_scr');
+            const dashboard = document.querySelector('.dashboard');
+            const header = document.getElementById('header_area');
+            const shortcuts = document.getElementById('shortcuts_guide');
+
+            if (fullscreen) {
+                fullScr.style.display = "flex"; 
+                dashboard.style.display = "none";
+                header.style.display = "none";
+                shortcuts.style.display = "none";
+                updateFullscreenUI();
+            } else {
+                fullScr.style.display = "none";
+                dashboard.style.display = "grid";
+                header.style.display = "flex";
+                shortcuts.style.display = "flex";
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (isTyping) return; // Ignore shortcuts if typing in search
+
+            const key = event.key.toLowerCase();
+            
+            if (key === 'k') {
+                togglePause();
+            } else if (key === 'n') {
+                skipTrack();
+            } else if (key === 'v') {
+                // Toggle volume between 0 and 100 quickly for shortcut
+                currentVol = currentVol > 0 ? 0 : 100;
+                fetch(`/volume?v=${currentVol}`);
+            } else if (event.key === 'F11') {
+                event.preventDefault(); // Stop default browser F11
+                fullscreen = !fullscreen;
+                toggleFullscreen();
+            }
+        });
+
+        // Start heartbeat
+        setInterval(fetchStatus, 2000);
+        fetchStatus();
+
+    </script>
 </body>
 </html>
