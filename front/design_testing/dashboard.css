@@ -1,3 +1,4 @@
+/* --- BASE STYLES & RESET --- */
 * {
     margin: 0;
     padding: 0;
@@ -6,7 +7,7 @@
 }
 
 ::-webkit-scrollbar {
-    visibility: hidden;
+    display: none; 
 }
 
 body {
@@ -14,62 +15,364 @@ body {
     width: 100vw;
     background-color: #ffffff;
     color: #111111;
-    background-image: url(../themes/white/Nick_Wonders_Eva3.0+1.0.heic);
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    background-image: url(../themes/white/n1ck_wonders_Asuka_7.jpg);
     background-repeat: no-repeat;
     background-position: center;
-    /* background-color: #111111;
-    color: #fafafa; */
-    display: block;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    font-family: Arial, Helvetica, sans-serif
 }
 
-/* --- THE MAIN DASHBOARD --- */
-#gimme_head {
+/* --- HEADER AREA (Logs + Title) --- */
+#header_area {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; 
+    
+    /* ---> TWEAK HEADER MARGINS/PADDING HERE <--- */
     width: 100vw;
-    height: 5vh;
-    margin-top: 140px;
-    margin-bottom: 100px;
-    padding-right: 6vw;
-    align-content: end;
-    text-align: right;
+    height: 25vh;        /* Adjusts how tall the top section (and the terminal) is */
+    margin-top: 40px;   /* Pushes the whole block down from the ceiling */
+    margin-bottom: 90px;/* Distance between header and dashboard grid */
+    padding-left: 2.5vw; /* Distance from left edge */
+    padding-right: 6vw;  /* Distance from right edge */
 }
 
+/* The Arch Linux Rice Terminal */
+#logs_container {
+    /* ---> TWEAK TERMINAL SIZE HERE <--- */
+    width: 65vw; /* Much wider now */
+    height: 100%; 
+    padding: 15px;
+    
+    /* The Rice Aesthetic: Translucent and almost unreadable by default */
+    background-color: rgba(17,17, 17, 0.05); 
+    color: rgba(7, 7, 7, 0.4); 
+    border: 1px solid transparent;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    display: flex;
+    flex-direction: column-reverse; /* Keeps newest logs at the bottom */
+    /* transition: all 0.3s ease; */
+}
+
+#logs_container:hover {
+    /* Focus mode on hover */
+    background-color: rgba(17, 17, 17, 0.1); 
+    color: rgba(17, 17, 17, 0.7); 
+    /* border: 1px solid #111111; */
+}
+
+/* Title Area (Top Right) */
+#gimme_head {
+    text-align: right;
+    align-content: end;
+}
+#title_text {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 2.5rem;
+    /* font-weight: bold; */
+    letter-spacing: -0.05em;
+}
+#version {
+    font-size: 0.8rem;
+    opacity: 0.6;
+    font-weight: bold;
+}
+
+/* --- MAIN DASHBOARD GRID (The Asymmetric Layout) --- */
 .dashboard {
     display: grid;
+    
+    /* ---> TWEAK THE OFF-CENTER GRID LAYOUT HERE <--- */
     height: 500px;
-    margin-right: 20vw;
+    margin-right: 20vw; /* Massive right margin to intentionally offset the grid */
+    padding-left: 2.5vw;
     grid-auto-rows: 500px;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    
     justify-items: stretch;
-    justify-items: stretch;
-    padding-left: 2.5vw;
+    gap: 0px;
 }
 
+/* Grid Hover Behaviors */
+.grid_cell {
+    /* padding: 15px; */
+    transition: opacity 0s ease, border 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid transparent;
+}
+
+/* Cell 1: Now Playing */
 .uneditable_tracks {
-    opacity: 1;
-    border: 2px solid #111111; /*#fafafa; */
+    opacity: 1; 
+    padding: 0; 
 }
-.track_list_area {
+#controls {
     opacity: 0;
-} .track_list_area:hover {
-    opacity: 1;
-    border: 2px solid #111111; /*#fafafa; */
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease;
+    text-align: center;
+    padding: 0 20px;
 }
-.search_api {
+.uneditable_tracks:hover {
+    border: 2px solid #111111;
+}
+.uneditable_tracks:hover #controls {
+    opacity: 1;
+    height: auto;
+    padding: 20px;
+}
+
+/* Cell 2 & 3: Queue & Search */
+.track_list_area, .search_api {
     opacity: 0;
-} .search_api:hover {
+}
+.track_list_area:hover, .search_api:hover {
     opacity: 1;
-    border: 2px solid #111111; /*#fafafa; */
+    border: 2px solid #111111;
 }
 
-#device_status_area {
+/* --- TRACK TILE TEMPLATE --- */
+.track_tile {
+    padding: 20px;
+    border-bottom: 1px solid #111111;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background-color: #111111;
+    color: #ffffff;
+    height: 120px;
+}
+.line1, .line3 {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    font-weight: bold;
+    opacity: 0.6;
+}
+.song_name {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transform: scaleX(0.9);
+    transform-origin: left;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+/* --- CONTROLS BUTTONS --- */
+button {
+    background: transparent;
+    border: 1px solid #111111;
+    color: #111111;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+button:hover {
+    background: #111111;
+    color: #ffffff;
+}
+.control_btn {
+    width: 100%;
+    height: 35px;
+    margin-bottom: 10px;
+}
+.controls_line {
+    display: flex;
+    gap: 10px;
+}
+
+/* --- QUEUE LIST --- */
+#track_list_header {
+    padding: 15px;
+    font-weight: bold;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 2.5rem;
+    /* border-bottom: 2px solid #111111;
+    padding-bottom: 5px; */
+    height: 120px;
+    background-color: #111111;
+    color: #ffffff;
+}
+#tracks_remaining {
+    font-size: 0.65rem;
+    font-weight: normal;
+    font-family: Arial, Helvetica, sans-serif;
+    margin-bottom: 12px;
+    opacity: 0.6;
+    font-weight: bold;
+}
+.queue_item {
+    font-size: 0.85rem;
+    padding: 8px 0;
+    border-bottom: 1px dashed #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- SEARCH UI --- */
+input {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 2.5rem;
+    background-color: rgba(0, 0, 0, 0);
+    color: #ffffff;
+    border: 0;
+    padding: 15px;
+}
+.search-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+    background-color: #111111;
+    color: #ffffff;
+    height: 120px;
+}
+#search_input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #111111;
+    font-family: monospace;
+    outline: none;
+}
+#search_sources {
+    display: flex;
+    gap: 10px;
+}
+.source-btn {
+    flex: 1;   
+    color: #aaa;
+    font-size: 0.65rem;
+}
+.result-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #ccc;
+    font-size: 0.85rem;
+}
+.result-card button {
+    padding: 5px 10px;
+    font-size: 0.7rem;
+}
+
+/* --- SHORTCUTS GUIDE (4x2 Hover Matrix) --- */
+#shortcuts_wrapper {
+    /* ---> TWEAK SHORTCUTS POSITION HERE <--- */
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding-left: 2.5vw;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    
+    background: transparent;
+    opacity: 0; /* Invisible until hover */
+    transition: opacity 0.3s ease;
+}
+#shortcuts_wrapper:hover {
+    opacity: 1; /* Reveals the matrix */
+    background-color: rgba(17, 17, 17, 0.4);
+    color: #ffffff;
+}
+#shortcuts_title {
+    font-family: 'Times New Roman', Times, serif;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ffffff;
+    display: inline-block;
+    padding-bottom: 2px;
+}
+#shortcuts_grid {
+    display: grid;
+    /* The 4x2 layout */
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 12px 25px; /* vertical gap, horizontal gap */
+    
+    font-size: 0.65rem;
+    font-family: monospace;
+    color: #ffffff;
+}
+.shortcut-item span {
+    font-weight: bold;
+    border: 1px solid #ffffff;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-right: 5px;
+}
+
+/* --- FULL SCREEN MODE --- */
+#full_scr {
+    z-index: 100;
+    height: 100vh;
+    width: 100vw;
+    padding: 0 24vw;
+    position: fixed; 
+    top: 0;
+    left: 0;
+    display: none; 
+    background-color: #ffffff; 
+    color: #111111;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+#full_scr_details {
+    width: 100%;
+    overflow: hidden;
+}
+#top_text, #mid_text, #fs_artist, #fs_track_no, #fs_song {
+    font-weight: bold;
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    transform-origin: left;
+    transform: scaleX(0.75);
+}
+#top_text { padding-top: 5vh; font-size: 10vh; font-family: 'Times New Roman', Times, serif;}
+#mid_text { font-size: 12.5vh; font-family: 'Times New Roman', Times, serif;}
+#fs_song {
+    font-size: 18.75vh;
+    font-family: 'Times New Roman', Times, serif;
+    display: inline-block;
+    width: max-content;
+    animation: song-bounce 8s linear infinite alternate;
+}
+#fs_track_no { font-size: 10vh; padding-top: 5vh; }
+#fs_artist {
+    font-size: 12.5vh;
+    transform-origin: right;
+    text-align: right;
+    width: max-content;
+    min-width: 100%;
+    display: inline-block;
+    animation: artist-bounce 8s linear infinite alternate;
+}
+#pause_overlay {
     display: none;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 50vh;
+    transform: scaleX(0.5);
 }
 
-#theme {
-    display: none;
+@keyframes song-bounce {
+    0% { transform: scaleX(0.75) translateX(0%); }
+    100% { transform: scaleX(0.75) translateX(-20%); }
 }
-
+@keyframes artist-bounce {
+    0% { transform: scaleX(0.75) translateX(0%); }
+    100% { transform: scaleX(0.75) translateX(20%); }
+}
