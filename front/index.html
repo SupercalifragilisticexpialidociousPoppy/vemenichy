@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vemenichy!</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+    <div id="header_area">
+        <div id="logs_container">Waiting for server logs...</div>
+        <div id="gimme_head">
+            <div id="version">ver_0.5</div>
+            <div id="title_text">vemenichy!</div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        
+        <div class="grid_cell uneditable_tracks">
+            <div id="current_track_tile">
+                <div class="track_tile current">
+                    <div class="line1">
+                        <div class="now_play">NOW PLAYING</div>
+                        <div class="track_no" id="track_no">?</div>
+                    </div>
+                    <div class="line2">
+                        <div class="song_name" id="np_song">NOTHING</div>
+                    </div>
+                    <div class="line3">
+                        <div class="np_artist">QUEUE A SONG, IDIOT!</div>
+                        <div class="track_length">--:--</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="controls">
+                <button class="control_btn" onclick="togglePause()">⏯️ PAUSE / PLAY</button>
+                <button class="control_btn" onclick="skipTrack()">⏭️ SKIP TRACK</button>
+                <div class="controls_line">
+                    <button class="control_btn" onclick="changeVolume('down')">🔉 VOL -</button>
+                    <button class="control_btn" onclick="changeVolume('up')">🔊 VOL +</button>
+                </div>
+                <!-- <div class="controls_line">
+                    <button class="control_btn" style="opacity: 0.3; cursor: not-allowed;">SWAP (WIP)</button>
+                    <button class="control_btn" style="opacity: 0.3; cursor: not-allowed;">DELETE (WIP)</button>
+                </div> -->
+            </div>
+        </div>
+
+        <div class="grid_cell track_list_area">
+            <div id="track_list_header">
+                <div id="tracks_remaining">OUT OF 0</div>
+                QUEUE
+            </div>
+            <div id="queueDisplay">
+                <div style="color: #888; font-size: 0.8rem; padding-top: 8px;"></div>
+            </div>
+        </div>
+
+        <div class="grid_cell search_api">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="/SEARCH">
+                <div id="search_sources">
+                    <button class="source-btn" onclick="searchMusic('yt')">YOUTUBE</button>
+                    <button class="source-btn"  style="opacity: 0.6; cursor: not-allowed;" onclick="searchMusic('sc')">SOUNDCLOUD</button>
+                </div>
+            </div>
+            <div id="resultsContainer"></div>
+        </div>
+
+    </div>
+
+    <div id="shortcuts_wrapper">
+        <div id="shortcuts_title">Shortcuts</div>
+        <div id="shortcuts_grid">
+            <div class="shortcut-item"><span>K</span> Play/Pause</div>
+            <div class="shortcut-item"><span>V</span> Volume</div>
+            <!-- <div class="shortcut-item"><span>Q</span> Swap Queue</div> -->
+            <div class="shortcut-item"><span>F</span> Fullscreen</div>
+            <div class="shortcut-item"><span>/</span> Search</div>
+            <div class="shortcut-item"><span>N</span> Skip</div>
+            <div class="shortcut-item"><span>M</span> Mute</div>
+            <div class="shortcut-item"><span>B</span> Change Background</div>
+            <!-- <div class="shortcut-item"><span>X</span> Delete Track</div> -->            
+            <div class="shortcut-item"><span>S</span> Settings</div>
+            
+        </div>
+    </div>
+
+    <div id="full_scr">
+        <div id="full_scr_details">
+            <div id="top_text">VEMENICHY! v0.2</div>
+            <div id="mid_text">NOW PLAYING:</div>
+            <div id="fs_song">NOTHING</div>
+            <div id="fs_track_no">TRACK : ?</div>        
+            <div id="fs_artist">QUEUE A SONG, IDIOT!</div>
+        </div>
+        <div id="pause_overlay">PAUSED</div>
+    </div>
+
+        <div id="settings_overlay" class="floating_menu" style="width: 450px;">
+        <div class="settings_header">SYSTEM SETTINGS</div>
+        
+        <div class="settings_section">
+            <div class="settings_title">1. LAYOUT SETTINGS</div>
+            <label><input type="checkbox" id="setting_force_grid"> Force grid cells always visible</label><br>
+            <label style="margin-top: 8px; display: inline-block;"><input type="checkbox" id="setting_hide_logs"> Hide terminal logs</label>
+        </div>
+
+        <div class="settings_section">
+            <div class="settings_title">2. THEME</div>
+            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                <button class="control_btn" style="margin: 0; background: #fafafa; color: #111111;">LIGHT (ACTIVE)</button>
+                <button class="control_btn" style="margin: 0; opacity: 0.4; cursor: not-allowed;" disabled>DARK (WIP)</button>
+            </div>
+            <label>BG Cycle Time (seconds): <input type="number" id="setting_bg_time" value="300" min="1"></label>
+        </div>
+
+        <div class="settings_section" style="margin-bottom: 0;">
+            <div class="settings_title">3. CREDITS</div>
+            <p class="credits_text">Thanks to my mom for getting me a raspberry pi :3</p>
+            <p class="credits_text">My GitHub: <a href="https://github.com/SupercalifragilisticexpialidociousPoppy" target="_blank">@Mirai</a></p>
+            <p class="credits_text">BG Artist: <a href="https://instagram.com/n1ck_Wonders" target="_blank">@★ℕ¡c𝓴☆</a></p>
+        </div>
+    </div>
+
+    <div id="volume_overlay" class="floating_menu">
+        <div id="vol_status">MUTED: FALSE | CURRENT: 100 | CACHED: 100</div>
+        <div style="display: flex; gap: 10px; margin-top: 15px; align-items: center;">
+            <span>> SET VOL:</span>
+            <input type="number" id="vol_input" min="0" max="100" placeholder="_">
+        </div>
+    </div>
+    
+    <div id="vol_error" class="floating_menu error_menu">Volume range is [0 - 100], dumbass.</div>
+
+    <script>
+        // --- STATE VARIABLES ---
+        let fullscreen = false;
+        let stream_paused = false;
+        let player_muted = false;
+        let isTyping = false;
+        let volume_menu_open = false;
+        let currentVol = 100;
+        let cachedVol = 100;
+        let currentSongTitle = "NOTHING";
+        let bigTimerId = null;
+
+        // Prevent shortcuts from firing when typing in the search box
+        document.getElementById('searchInput').addEventListener('focus', () => isTyping = true);
+        document.getElementById('searchInput').addEventListener('blur', () => isTyping = false);
+
+        // --- 1. SEARCH & DOWNLOAD LOGIC ---
+        async function searchMusic(source) {
+            const query = document.getElementById('searchInput').value;
+            const container = document.getElementById('resultsContainer');
+            if (!query) return;
+
+            container.innerHTML = "<em>Searching " + (source === 'yt' ? 'YouTube' : 'SoundCloud') + "...</em>";
+
+            try {
+                const response = await fetch(`/search?source=${source}&q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                container.innerHTML = "";
+
+                data.forEach(track => {
+                    const title = track.title || track.fulltitle || "Unknown Title";
+                    const url = track.webpage_url || `https://www.youtube.com/watch?v=${track.id}`;
+
+                    const card = document.createElement('div');
+                    card.className = 'result-card';
+                    
+                    const titleSpan = document.createElement('span');
+                    titleSpan.innerText = title;
+                    
+                    const playBtn = document.createElement('button');
+                    playBtn.innerText = "⬇️ QUEUE";
+                    playBtn.onclick = () => downloadAndPlay(playBtn, url, title);
+
+                    card.appendChild(titleSpan);
+                    card.appendChild(playBtn);
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                container.innerHTML = `<span style="color:red">Search failed.</span>`;
+            }
+        }
+
+        async function downloadAndPlay(buttonElement, trackUrl, trackTitle) {
+            buttonElement.disabled = true;
+            buttonElement.innerText = "⏳...";
+            try {
+                const safeUrl = encodeURIComponent(trackUrl);
+                const safeTitle = encodeURIComponent(trackTitle);
+                await fetch(`/download?url=${safeUrl}&title=${safeTitle}`);
+                buttonElement.innerText = "✅";
+            } catch (error) {
+                buttonElement.innerText = "❌";
+                buttonElement.disabled = false;
+            }
+        }
+
+        // --- 2. PLAYER CONTROLS ---
+        async function togglePause() {
+            stream_paused = !stream_paused;
+            await fetch('/pause');
+            updateFullscreenUI();
+        }
+
+        async function skipTrack() {
+            await fetch('/skip');
+        }
+
+        async function changeVolume(direction) {
+            if (direction === 'up' && cachedVol < 100) cachedVol += 10;
+            if (direction === 'down' && cachedVol > 0) cachedVol -= 10;
+            if (!player_muted) {currentVol = cachedVol;}
+            await fetch(`/volume?v=${currentVol}`);
+        }
+
+        // --- 3. BACKGROUND HEARTBEAT (Sync UI & Logs) ---
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                if (data.now_playing) {
+                    currentSongTitle = data.now_playing.title || data.now_playing.Title || "Unknown Track";
+                    document.getElementById('np_song').innerText = currentSongTitle;
+                    document.getElementById('fs_song').innerText = currentSongTitle.toUpperCase();
+                } else {
+                    currentSongTitle = "NOTHING";
+                    document.getElementById('np_song').innerText = "NOTHING";
+                    document.getElementById('fs_song').innerText = "NOTHING";
+                }
+
+                const qDisplay = document.getElementById('queueDisplay');
+                if (data.queue && data.queue.length > 0) {
+                    const listItems = data.queue.map((track, index) => {
+                        const t = track.title || track.Title || track.id;
+                        return `<div class="queue_item">${index + 1}. ${t}</div>`;
+                    }).join('');
+                    qDisplay.innerHTML = listItems;
+                } else {
+                    qDisplay.innerHTML = `<div style="color: #888; font-size: 0.8rem;">Queue is empty.</div>`;
+                }
+            } catch (error) {}
+
+            try {
+                const logResponse = await fetch('/logs');
+                const logData = await logResponse.json();
+                const terminal = document.getElementById('logs_container');
+                if (logData.logs && logData.logs.length > 0) {
+                    const reversedLogs = [...logData.logs].reverse(); 
+                    const currentLogText = reversedLogs.join('\n');
+                    if (terminal.innerText !== currentLogText) {
+                        terminal.innerText = currentLogText;
+                    }
+                }
+            } catch (error) {}
+        }
+
+        // --- 4. FULLSCREEN & KEYBOARD LOGIC ---
+        function updateFullscreenUI() {
+            const details = document.getElementById('full_scr_details');
+            const pauseElement = document.getElementById('pause_overlay');
+
+            if (stream_paused) {
+                details.style.display = 'none';
+                pauseElement.style.display = 'block';
+            } else {
+                details.style.display = 'block';
+                pauseElement.style.display = 'none';
+            }
+        }
+
+        function toggleFullscreen() {
+            const fullScr = document.getElementById('full_scr');
+            const dashboard = document.querySelector('.dashboard');
+            const header = document.getElementById('header_area');
+            const shortcuts = document.getElementById('shortcuts_wrapper');
+
+            if (fullscreen) {
+                // Take over the monitor natively
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(err => console.error(err));
+                }
+                fullScr.style.display = "flex"; 
+                dashboard.style.display = "none";
+                header.style.display = "none";
+                shortcuts.style.display = "none";
+                updateFullscreenUI();
+            } else {
+                // Exit monitor fullscreen
+                if (document.fullscreenElement && document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                fullScr.style.display = "none";
+                dashboard.style.display = "grid";
+                header.style.display = "flex";
+                shortcuts.style.display = "block";
+            }
+        }
+
+        // --- 5. THE ESCAPE KEY SAFETY NET ---
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                fullscreen = false; 
+                document.getElementById('full_scr').style.display = "none";
+                document.querySelector('.dashboard').style.display = "grid";
+                document.getElementById('header_area').style.display = "flex";
+                document.getElementById('shortcuts_wrapper').style.display = "block";
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (isTyping) return; 
+
+            const key = event.key.toLowerCase();
+            
+            if (key === 'k') {
+                togglePause();
+            } else if (key === 'n') {
+                skipTrack();
+            } else if (key === 'v') {
+                // 1. Stop the browser from actually typing the letter "v" into the box
+                event.preventDefault(); 
+                volume_menu_open = !volume_menu_open;
+                volume_menu_open ? openVolumeMenu() : closeVolumeMenu();
+            } else if (key === 'f') {
+                event.preventDefault(); 
+                fullscreen = !fullscreen;
+                toggleFullscreen();
+            } else if (key === 'b') {
+                cycleBackground();
+            } else if (key === 'm') {
+                player_muted = !player_muted;
+                currentVol = player_muted > 0 ? 0 : cachedVol;
+                fetch(`/volume?v=${currentVol}`)
+            } else if (key === 's') {
+                event.preventDefault();
+                document.getElementById('settings_overlay').style.display = 'flex';
+            } else if (key === '/') {
+                // 1. Stop the browser from actually typing "/" into the box
+                event.preventDefault(); 
+                
+                const searchCell = document.querySelector('.search_api');
+                const searchInput = document.getElementById('searchInput');
+
+                // 2. Unlock all other cells to keep the UI clean
+                document.querySelectorAll('.grid_cell').forEach(cell => {
+                    cell.classList.remove('locked');
+                });
+
+                // 3. Lock the search cell so it snaps into view
+                searchCell.classList.add('locked');
+
+                // 4. Drop the cursor right into the input
+                searchInput.focus();
+            } else if (key === 'escape') {
+                document.getElementById('settings_overlay').style.display = 'none';
+
+                if (volume_menu_open) {volume_menu_open = false;}
+                closeVolumeMenu();
+
+                document.querySelectorAll('.grid_cell').forEach(cell => {
+                    cell.classList.remove('locked');
+                });
+            }
+        });
+
+        setInterval(fetchStatus, 2000);
+        fetchStatus();
+
+        // --- 6. BACKGROUND CAROUSEL LOGIC (JSON Powered) ---
+        let backgrounds = [];
+        let currentBgIndex = 0;
+
+        // Fetch the JSON file when the page loads
+        async function loadCarousel() {
+            try {
+                // Tells the Go server to hand over the JSON file
+                const response = await fetch('themes/white/carousel.json');
+                backgrounds = await response.json();
+                
+                // If it loaded successfully, set the first image instantly
+                if (backgrounds.length > 0) {
+                    applyBackground();
+                    // Start the 5-minute auto-rotation timer
+                    setInterval(cycleBackground, 300000);
+                }
+            } catch (error) {
+                console.error("🚨 Failed to load carousel config:", error);
+            }
+        }
+
+        function applyBackground() {
+            if (backgrounds.length === 0) return;
+            const bgData = backgrounds[currentBgIndex];
+            
+            // Assuming your JSON only has the filename, we prepend the folder path here.
+            // (If you change your folder structure later, you only have to change it here!)
+            document.body.style.backgroundImage = `url('themes/white/${bgData.path}')`;
+            
+            // Apply the custom background alignment from your JSON
+            document.body.style.backgroundPosition = bgData["background-position"];
+        }
+
+        function cycleBackground() {
+            // Move to the next index, loop back to 0 at the end
+            currentBgIndex = (currentBgIndex + 1) % backgrounds.length;
+            applyBackground();
+        }
+
+        loadCarousel().then(() => {
+            if (backgrounds.length > 0) {
+                // Default to 5 minutes
+                bgTimerId = setInterval(cycleBackground, 300000);
+            }
+        });
+
+        // --- 7. QOL: CLICK-TO-LOCK UI ---
+        document.addEventListener('click', function(event) {
+            // Check if the click happened anywhere inside one of our 3 grid cells
+            const clickedCell = event.target.closest('.grid_cell');
+
+            // 1. Unlock everything: Remove the 'locked' class from ALL cells
+            document.querySelectorAll('.grid_cell').forEach(cell => {
+                // Keep it locked if it's the one we just clicked!
+                if (cell !== clickedCell) {
+                    cell.classList.remove('locked');
+                }
+            });
+
+            // 2. Lock the active cell: If we clicked inside a cell, force it to stay open
+            if (clickedCell) {
+                clickedCell.classList.add('locked');
+            }
+        });
+
+        // --- 8. FLOATING VOLUME MENU LOGIC ---
+        function openVolumeMenu() {
+            const menu = document.getElementById('volume_overlay');
+            const statusText = document.getElementById('vol_status');
+            const input = document.getElementById('vol_input');
+
+            // Update the text to reflect current state
+            statusText.innerText = `MUTED: ${player_muted} | CURRENT: ${currentVol} | CACHED: ${cachedVol}`;
+            input.value = ''; // Clear old numbers
+            menu.style.display = 'flex';
+
+            // 🚨 THE MAGIC TRICK: Force the cursor into the box instantly
+            input.focus();
+        }
+
+        function closeVolumeMenu() {
+            document.getElementById('volume_overlay').style.display = 'none';
+            document.getElementById('vol_error').style.display = 'none';
+            document.getElementById('vol_input').blur(); // Remove focus
+        }
+
+        // Listen for the Enter key specifically inside the volume input box
+        document.getElementById('vol_input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                const val = parseInt(this.value, 10);
+
+                // Validation Check
+                if (isNaN(val) || val < 0 || val > 100) {
+                    const errorMenu = document.getElementById('vol_error');
+
+                    errorMenu.style.display = 'flex';
+                    
+                    // Hide the error after 1 seconds
+                    setTimeout(() => {
+                        errorMenu.style.display = 'none';
+                    }, 1000);
+                } else {
+                    // Success! Apply the logic.
+                    cachedVol = val;
+                    currentVol = player_muted ? 0 : cachedVol;
+                    volume_menu_open = !volume_menu_open;
+                    fetch(`/volume?v=${currentVol}`);
+                    closeVolumeMenu();
+                }
+            }
+        });
+
+        // --- 9. SETTINGS MENU LOGIC ---
+        
+        // Layout: Force Grid Visible
+        document.getElementById('setting_force_grid').addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.body.classList.add('force-grid');
+            } else {
+                document.body.classList.remove('force-grid');
+            }
+        });
+
+        // Layout: Hide Logs
+        document.getElementById('setting_hide_logs').addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.body.classList.add('hide-logs');
+            } else {
+                document.body.classList.remove('hide-logs');
+            }
+        });
+
+        // Theme: Custom Background Timer
+        document.getElementById('setting_bg_time').addEventListener('change', function(e) {
+            let seconds = parseInt(e.target.value, 10);
+            if (isNaN(seconds) || seconds < 1) {
+                seconds = 1;
+                e.target.value = 1;
+            }
+            
+            // Clear the old timer
+            if (bgTimerId) clearInterval(bgTimerId);
+            
+            // Start the new timer (minutes * 60 seconds * 1000 ms)
+            bgTimerId = setInterval(cycleBackground, seconds * 1000);
+        });
+
+    </script>
+</body>
+</html>

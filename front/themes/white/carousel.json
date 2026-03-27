@@ -1,206 +1,50 @@
 [
     {
         "id": 1,
-        "path": "n1ck_wonders_Asuka_1.jpg",
-        "anchor": "right bottom",
-        "theme": "#e74c3c" 
-    },
-        {
-        "id": 2,
-        "path": "n1ck_wonders_Asuka_2.jpg",
-        "anchor": "left bottom",
-        "theme": "#e74c3c" 
-    },
-        {
-        "id": 3,
-        "path": "n1ck_wonders_Asuka_3.jpg",
-        "anchor": "center bottom",
-        "theme": "#e74c3c" 
-    },
-        {
-        "id": 4,
-        "path": "n1ck_wonders_Asuka_4.jpg",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-        {
-        "id": 5,
-        "path": "n1ck_wonders_Asuka_5.jpg",
-        "anchor": "right center",
-        "theme": "#e74c3c" 
-    },
-        {
-        "id": 6,
         "path": "n1ck_wonders_Asuka_6.jpg",
-        "anchor": "center center",
+        "background-position": "center",
         "theme": "#e74c3c" 
     },
-        {
-        "id": 7,
+    {
+        "id": 2,
         "path": "n1ck_wonders_Asuka_7.jpg",
-        "anchor": "center bottom",
-        "theme": "#e74c3c" 
-    },
-        {
-        "id": 8,
-        "path": "n1ck_wonders_Asuka_8.jpg",
-        "anchor": "right bottom",
+        "background-position": "center",
         "theme": "#e74c3c" 
     },
     {
-        "id": 9,
-        "path": "n1ck_wonders_Asuka_9.jpg",
-        "anchor": "right bottom",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 10,
-        "path": "n1ck_wonders_Asuka_10.jpg",
-        "anchor": "right center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 11,
+        "id": 3,
         "path": "n1ck_wonders_Kaworu_1.jpg",
-        "anchor": "right bottom",
+        "background-position": "right",
         "theme": "#e74c3c" 
     },
     {
-        "id": 12,
+        "id": 4,
         "path": "n1ck_wonders_Mari_1.jpg",
-        "anchor": "right bottom",
+        "background-position": "right",
         "theme": "#e74c3c" 
     },
     {
-        "id": 13,
+        "id": 5,
         "path": "n1ck_wonders_Rei_1.jpg",
-        "anchor": "right bottom",
+        "background-position": "right",
         "theme": "#e74c3c" 
     },
     {
-        "id": 14,
-        "path": "n1ck_wonders_Rei_2.jpg",
-        "anchor": "right center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 15,
-        "path": "n1ck_wonders_Rei_3.jpg",
-        "anchor": "right center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 16,
-        "path": "n1ck_wonders_Rei_4.jpg",
-        "anchor": "right center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 17,
-        "path": "n1ck_wonders_Rei_5.jpg",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 18,
+        "id": 6,
         "path": "n1ck_wonders_Shinji_1.jpg",
-        "anchor": "right bottom",
+        "background-position": "right",
         "theme": "#e74c3c" 
     },
     {
-        "id": 19,
-        "path": "n1ck_wonders_Unit00_1.jpg",
-        "anchor": "right center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 20,
-        "path": "n1ck_wonders_Unit01_1.jpg",
-        "anchor": "right center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 21,
-        "path": "n1ck_wonders_Unit01_2.jpg",
-        "anchor": "right center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 22,
-        "path": "n1ck_wonders_Unit01_3.jpg",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 23,
-        "path": "n1ck_wonders_Unit01_4.jpg",
-        "anchor": "right bottom",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 24,
-        "path": "n1ck_wonders_Unit01_5.jpg",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 25,
-        "path": "n1ck_wonders_Unit01_6.jpg",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 26,
-        "path": "n1ck_wonders_Unit01_7.heic",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 27,
-        "path": "n1ck_wonders_Unit01_8.png",
-        "anchor": "right bottom",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 28,
-        "path": "n1ck_wonders_Unit02_1.jpg",
-        "anchor": "right center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 29,
-        "path": "n1ck_wonders_Unit02_2.jpg",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 30,
+        "id": 7,
         "path": "n1ck_wonders_Unit02_3.jpg",
-        "anchor": "center center",
+        "background-position": "right",
         "theme": "#e74c3c" 
     },
     {
-        "id": 31,
+        "id": 8,
         "path": "n1ck_wonders_Unit02_4.jpg",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 32,
-        "path": "n1ck_wonders_Unit02_5.jpg",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 33,
-        "path": "n1ck_wonders_Crew_1.jpg",
-        "anchor": "center center",
-        "theme": "#e74c3c" 
-    },
-    {
-        "id": 34,
-        "path": "n1ck_wonders_Crew_2.jpg",
-        "anchor": "right center",
+        "background-position": "right",
         "theme": "#e74c3c" 
     }
 ]

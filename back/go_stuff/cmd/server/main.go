@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -39,8 +38,7 @@ func main() {
 
 	// 5. START THE SERVER
 	port := ":8080"
-	fmt.Printf("Vemenichy Server v0.2 started on %s\n", port)
-	fmt.Println("   Ready to accept commands...")
+	player.WebLog("🚀 Vemenichy Server v0.5 started on %s\n\tReady to accept commands...", port)
 
 	// This blocks forever (waiting for requests)
 	err = http.ListenAndServe(port, mux)

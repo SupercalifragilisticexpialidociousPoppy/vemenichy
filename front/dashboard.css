@@ -17,7 +17,7 @@ body {
     color: #111111;
     overflow: hidden;
     font-family: Arial, Helvetica, sans-serif;
-    background-image: url(../themes/white/n1ck_wonders_Asuka_7.jpg);
+    background-image: url(themes/white/n1ck_wonders_Asuka_7.jpg);
     background-repeat: no-repeat;
     background-position: center;
 }
@@ -124,6 +124,9 @@ body {
     opacity: 1;
     height: auto;
     padding: 20px;
+    background-color: rgba(17, 17, 17, 0.0);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 
 /* Cell 2 & 3: Queue & Search */
@@ -133,6 +136,9 @@ body {
 .track_list_area:hover, .search_api:hover {
     opacity: 1;
     border: 2px solid #111111;
+    background-color: rgba(17, 17, 17, 0.0);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 
 /* --- TRACK TILE TEMPLATE --- */
@@ -183,7 +189,7 @@ button:hover {
 .control_btn {
     width: 100%;
     height: 35px;
-    margin-bottom: 10px;
+    margin-top: 10%;
 }
 .controls_line {
     display: flex;
@@ -218,6 +224,10 @@ button:hover {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.queue_item:hover {
+    background: rgba(17, 17, 17, 0.4);
+    color: #ffffff;    
+}
 
 /* --- SEARCH UI --- */
 input {
@@ -232,10 +242,9 @@ input {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 15px;
     background-color: #111111;
     color: #ffffff;
-    height: 120px;
+    min-height: 120px;
 }
 #search_input {
     width: 100%;
@@ -257,13 +266,34 @@ input {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px dashed #ccc;
+    padding: 10px;
+    border-top: 1px dashed #ccc;
     font-size: 0.85rem;
+}
+.result-card:hover {
+    background: rgba(17, 17, 17, 0.4);
+    color: #ffffff;
 }
 .result-card button {
     padding: 5px 10px;
     font-size: 0.7rem;
+}
+
+/* JS "Click-to-Lock" States */
+.track_list_area.locked, .search_api.locked {
+    opacity: 1;
+    border: 2px solid #111111;
+    background-color: rgba(17, 17, 17, 0.0);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+.uneditable_tracks.locked #controls {
+    opacity: 1;
+    height: auto;
+    padding: 20px;
+    /* background-color: rgba(17, 17, 17, 0.0);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); */
 }
 
 /* --- SHORTCUTS GUIDE (4x2 Hover Matrix) --- */
@@ -337,7 +367,7 @@ input {
     font-weight: bold;
     letter-spacing: -0.05em;
     white-space: nowrap;
-    overflow: hidden;
+    overflow: auto;
     display: block;
     transform-origin: left;
     transform: scaleX(0.75);
@@ -348,8 +378,8 @@ input {
     font-size: 18.75vh;
     font-family: 'Times New Roman', Times, serif;
     display: inline-block;
-    width: max-content;
-    animation: song-bounce 8s linear infinite alternate;
+    width: min-content;
+    /* animation: song-bounce 8s linear infinite alternate; */
 }
 #fs_track_no { font-size: 10vh; padding-top: 5vh; }
 #fs_artist {
@@ -359,20 +389,150 @@ input {
     width: max-content;
     min-width: 100%;
     display: inline-block;
-    animation: artist-bounce 8s linear infinite alternate;
+    /* animation: artist-bounce 8s linear infinite alternate; */
 }
 #pause_overlay {
     display: none;
     font-family: 'Times New Roman', Times, serif;
-    font-size: 50vh;
-    transform: scaleX(0.5);
+    font-size: 75vh;
+    transform: scaleX(0.30);
 }
 
-@keyframes song-bounce {
+/* @keyframes song-bounce {
     0% { transform: scaleX(0.75) translateX(0%); }
     100% { transform: scaleX(0.75) translateX(-20%); }
 }
 @keyframes artist-bounce {
     0% { transform: scaleX(0.75) translateX(0%); }
     100% { transform: scaleX(0.75) translateX(20%); }
+} */
+
+/* --- FLOATING MENUS --- */
+.floating_menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(17, 17, 17, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #fafafa;
+    border: 2px solid #ccc;
+    padding: 25px;
+    font-family: monospace;
+    z-index: 1000;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
+}
+
+#vol_input {
+    background: transparent;
+    color: #fff;
+    border: none;
+    border-bottom: 1px solid #fafafa;
+    font-family: monospace;
+    font-size: 1rem;
+    width: 80px;
+    text-align: center;
+    outline: none;
+}
+
+/* Hide the ugly browser number arrows */
+#vol_input::-webkit-outer-spin-button,
+#vol_input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.error_menu {
+    top: calc(50%); /* Pushes the error menu directly below the main one */
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+/* --- SETTINGS MENU SPECIFICS --- */
+.settings_header { 
+    font-weight: bold; 
+    border-bottom: 1px solid #fafafa; 
+    padding-bottom: 10px; 
+    margin-bottom: 20px; 
+    width: 100%; 
+    text-align: center; 
+    letter-spacing: 2px;
+}
+.settings_section { 
+    width: 100%; 
+    margin-bottom: 25px; 
+    text-align: left; 
+}
+.settings_title { 
+    font-weight: bold; 
+    font-family: 'Times New Roman', Times, serif; 
+    margin-bottom: 12px; 
+    color: #ffffff; 
+}
+.settings_section label { 
+    font-size: 0.8rem; 
+    cursor: pointer; 
+}
+.settings_section input[type="checkbox"] { 
+    margin-right: 8px; 
+    accent-color: #111111;
+}
+.settings_section input[type="number"] { 
+    background: transparent; 
+    color: #fff; 
+    border: 1px solid #fafafa; 
+    outline: none; 
+    padding: 2px 5px; 
+    font-family: monospace; 
+    font-size: 1.2rem;
+    height: 50px;
+    width: 150px;
+    text-align: center;
+    overflow: hidden;
+}
+.credits_text {
+    font-size: 0.75rem; 
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+.credits_text a {
+    color: #dcdcdc;
+    text-decoration: none;
+    border-bottom: 1px dashed #ececec;
+}
+.credits_text a:hover {
+    color: #fafafa;
+    border-bottom: 1px solid #fafafa;
+}
+
+/* --- JS LAYOUT OVERRIDES --- */
+/* Forces all grid cells open and blurs them */
+body.force-grid .track_list_area, 
+body.force-grid .search_api { 
+    opacity: 1; 
+    border: 2px solid #111111; 
+    /* background-color: rgba(17, 17, 17, 0.0); 
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px);  */
+}
+body.force-grid .uneditable_tracks #controls { 
+    opacity: 1; 
+    height: auto; 
+    padding: 20px;
+}
+body.force-grid .uneditable_tracks {
+    border: 2px solid #111111;
+    /* background-color: rgba(17, 17, 17, 0.0); 
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px); */
+}
+
+/* Fades the terminal logs out completely */
+body.hide-logs #logs_container { 
+    opacity: 0 !important; 
+    pointer-events: none; 
 }

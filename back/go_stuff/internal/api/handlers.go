@@ -48,69 +48,48 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	player.WebLog("📲 UI Request: Search %s for '%s'", strings.ToUpper(source), query)
+
 	var results []map[string]string
 
 	if source == "sc" {
-		// Scraping SoundCloud with yt-dlp
-		fmt.Printf("🔍 Searching SoundCloud for: '%s'\n", query)
-
-		cmd := exec.Command("yt-dlp",
-			"--dump-json",
-			"--flat-playlist",
-			"--skip-download",
-			"scsearch10:"+query)
-
+		// (Keep your existing SC logic here, just change fmt.Printf to player.WebLog for errors)
+		cmd := exec.Command("yt-dlp", "--dump-json", "--flat-playlist", "--skip-download", "scsearch10:"+query)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			fmt.Printf("🚨 YT-DLP Error: %v\n", err)
+			player.WebLog("🚨 YT-DLP Error: %v", err)
 			w.Write([]byte("[]"))
 			return
 		}
 
-		// yt-dlp outputs one standalone JSON object per line
 		lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-
 		for _, line := range lines {
 			if line == "" {
 				continue
 			}
-
-			// Create a temporary struct to hold the exact JSON fields we care about
 			var trackData struct {
 				Title    string  `json:"title"`
 				Uploader string  `json:"uploader"`
-				Duration float64 `json:"duration"` // yt-dlp outputs duration in raw seconds
+				Duration float64 `json:"duration"`
 				ID       string  `json:"id"`
 				URL      string  `json:"url"`
 			}
-
-			// Unmarshal the JSON string into our struct
 			if err := json.Unmarshal([]byte(line), &trackData); err != nil {
-				fmt.Printf("Skipping unparseable JSON line: %v\n", err)
 				continue
 			}
 
-			// Convert raw seconds (e.g., 205) to mm:ss format (e.g., 3:25)
 			durSec := int(trackData.Duration)
 			durStr := fmt.Sprintf("%d:%02d", durSec/60, durSec%60)
 
-			entry := map[string]string{
-				"title":    trackData.Title,
-				"artist":   trackData.Uploader,
-				"duration": durStr,
-				"id":       trackData.ID,
-				"url":      trackData.URL,
-				"source":   "sc",
-			}
-			results = append(results, entry)
+			results = append(results, map[string]string{
+				"title": trackData.Title, "artist": trackData.Uploader,
+				"duration": durStr, "id": trackData.ID, "url": trackData.URL, "source": "sc",
+			})
 		}
 	} else if source == "yt" {
-		// --- YOUTUBE: Official API ---
-		fmt.Printf("🔍 Searching YouTube for: '%s'\n", query)
-
 		ytResults, err := youtube.Search(query)
 		if err != nil {
-			fmt.Printf("YouTube API Error: %v\n", err)
+			player.WebLog("🚨 YouTube API Error: %v", err)
 			w.Write([]byte("[]"))
 			return
 		}
@@ -120,7 +99,6 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	if results == nil {
 		results = []map[string]string{}
 	}
-
 	json.NewEncoder(w).Encode(results)
 }
 
@@ -173,13 +151,8 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 
 // HandleSkip aggressively kills the current track to trigger the next one
 func HandleSkip(w http.ResponseWriter, r *http.Request) {
-	// if r.Method != http.MethodPost {
-	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	// 	return
-	// }
-
+	player.WebLog("📲 UI Request: Skip Track")
 	player.Skip()
-
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status": "success", "message": "Track skipped"}`))
 }
@@ -202,13 +175,8 @@ func HandleGetQueue(w http.ResponseWriter, r *http.Request) {
 
 // HandlePause toggles the playback state of the current track
 func HandlePause(w http.ResponseWriter, r *http.Request) {
-	// if r.Method != http.MethodPost {
-	// 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	// 	return
-	// }
-
+	player.WebLog("📲 UI Request: Toggle Pause")
 	player.TogglePause()
-
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status": "success", "message": "Playback toggled"}`))
 }
@@ -228,6 +196,7 @@ func HandleStatus(w http.ResponseWriter, r *http.Request) {
 func HandleVolume(w http.ResponseWriter, r *http.Request) {
 	level := r.URL.Query().Get("v")
 	if level != "" {
+		player.WebLog("📲 UI Request: Set Volume to %s%%", level)
 		player.SetVolume(level)
 	}
 	w.WriteHeader(http.StatusOK)
