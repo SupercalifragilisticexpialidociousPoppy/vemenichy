@@ -372,25 +372,46 @@ input {
     transform-origin: left;
     transform: scaleX(0.75);
 }
-#top_text { padding-top: 5vh; font-size: 10vh; font-family: 'Times New Roman', Times, serif;}
-#mid_text { font-size: 12.5vh; font-family: 'Times New Roman', Times, serif;}
+#top_text { padding-top: 5vh; font-size: 7.5vh; font-family: 'Times New Roman', Times, serif;}
+#mid_text { font-size: 7.5vh; font-family: 'Times New Roman', Times, serif;}
 #fs_song {
-    font-size: 18.75vh;
+    font-size: 17vh;
     font-family: 'Times New Roman', Times, serif;
-    display: inline-block;
-    width: min-content;
-    /* animation: song-bounce 8s linear infinite alternate; */
-}
-#fs_track_no { font-size: 10vh; padding-top: 5vh; }
+    display: block;
+    width: 100%; 
+    white-space: normal; 
+    word-wrap: break-word;
+    line-height: 0.85; 
+    max-height: 43vh;
+    overflow-y: scroll;
+    width: 60vw;
+} 
 #fs_artist {
-    font-size: 12.5vh;
+    font-size: 7.5vh;
     transform-origin: right;
     text-align: right;
-    width: max-content;
-    min-width: 100%;
-    display: inline-block;
-    /* animation: artist-bounce 8s linear infinite alternate; */
+    display: block; 
+    width: 100%; 
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 0.85;
+    max-height: 20vh;
+    overflow-y: scroll;
 }
+/* #fs_song {
+    font-family: 'Times New Roman', Times, serif;
+    display: block;
+    width: 100%;
+}
+#fs_artist {
+    transform-origin: right;
+    text-align: right;
+    display: block;
+    width: 100%;
+} */
+
+#fs_track_no { font-size: 6vh; padding-top: 5vh; }
+
 #pause_overlay {
     display: none;
     font-family: 'Times New Roman', Times, serif;

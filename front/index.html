@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>vemenichy!</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
@@ -29,7 +30,7 @@
                         <div class="song_name" id="np_song">NOTHING</div>
                     </div>
                     <div class="line3">
-                        <div class="np_artist">QUEUE A SONG, IDIOT!</div>
+                        <div class="np_artist" id="np_artist">QUEUE A SONG, IDIOT!</div>
                         <div class="track_length">--:--</div>
                     </div>
                 </div>
@@ -91,7 +92,7 @@
 
     <div id="full_scr">
         <div id="full_scr_details">
-            <div id="top_text">VEMENICHY! v0.2</div>
+            <div id="top_text">VEMENICHY! v0.5</div>
             <div id="mid_text">NOW PLAYING:</div>
             <div id="fs_song">NOTHING</div>
             <div id="fs_track_no">TRACK : ?</div>        
@@ -147,6 +148,7 @@
         let cachedVol = 100;
         let currentSongTitle = "NOTHING";
         let bigTimerId = null;
+        let total_songs = 0;
 
         // Prevent shortcuts from firing when typing in the search box
         document.getElementById('searchInput').addEventListener('focus', () => isTyping = true);
@@ -167,20 +169,33 @@
 
                 data.forEach(track => {
                     const title = track.title || track.fulltitle || "Unknown Title";
+                    const artist = track.artist || track.uploader || "Unknown Artist";
+                    const duration = track.duration || "--:--";
                     const url = track.webpage_url || `https://www.youtube.com/watch?v=${track.id}`;
 
                     const card = document.createElement('div');
                     card.className = 'result-card';
                     
-                    const titleSpan = document.createElement('span');
-                    titleSpan.innerText = title;
+                    // Combine Title, Artist, and Duration into one neat left-aligned block
+                    const infoSpan = document.createElement('span');
+                    infoSpan.style.display = "flex";
+                    infoSpan.style.flexDirection = "column";
+                    infoSpan.style.gap = "3px";
+                    
+                    infoSpan.innerHTML = `
+                        <span style="font-family: Arial, sans-serif; font-size: 1.1rem;">${title}</span>
+                        <span style="font-size: 0.7rem; opacity: 0.6; font-family: Arial, sans-serif;">${artist} • ${duration}</span>
+                    `;
                     
                     const playBtn = document.createElement('button');
                     playBtn.innerText = "⬇️ QUEUE";
-                    playBtn.onclick = () => downloadAndPlay(playBtn, url, title);
+                    console.log("🔍 [Step 1: Search Result] Parsed Data:", { title, artist, duration, url });
+                    playBtn.onclick = () => downloadAndPlay(playBtn, url, title, artist, duration); 
 
-                    card.appendChild(titleSpan);
+                    // Attach the combined info and the button to the card
+                    card.appendChild(infoSpan);
                     card.appendChild(playBtn);
+                    
                     container.appendChild(card);
                 });
             } catch (error) {
@@ -188,13 +203,20 @@
             }
         }
 
-        async function downloadAndPlay(buttonElement, trackUrl, trackTitle) {
+        async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist, trackDuration) {
             buttonElement.disabled = true;
             buttonElement.innerText = "⏳...";
             try {
                 const safeUrl = encodeURIComponent(trackUrl);
                 const safeTitle = encodeURIComponent(trackTitle);
-                await fetch(`/download?url=${safeUrl}&title=${safeTitle}`);
+                const safeArtist = encodeURIComponent(trackArtist); 
+                const safeDuration = encodeURIComponent(trackDuration);
+                
+                console.log("🚀 [Step 2: Fetch Call] Sending to Go:", { 
+                    title: trackTitle, artist: trackArtist, duration: trackDuration 
+                });
+
+                await fetch(`/download?url=${safeUrl}&title=${safeTitle}&artist=${safeArtist}&duration=${safeDuration}`);
                 buttonElement.innerText = "✅";
             } catch (error) {
                 buttonElement.innerText = "❌";
@@ -207,6 +229,9 @@
             stream_paused = !stream_paused;
             await fetch('/pause');
             updateFullscreenUI();
+            if (stream_paused) {
+                document.querySelector('now_play').innerText = "NOW PAUSED";
+            } else {document.querySelector('now_play').innerText = "NOW PLAYING";}
         }
 
         async function skipTrack() {
@@ -226,25 +251,62 @@
                 const response = await fetch('/status');
                 const data = await response.json();
                 
+                // 🚨 TRACER 6: (Warning: This prints every 2 seconds)
+                // console.log("📥 [Step 6: Status Heartbeat]", data);     
+
                 if (data.now_playing) {
-                    currentSongTitle = data.now_playing.title || data.now_playing.Title || "Unknown Track";
+                    currentSongTitle = data.now_playing.title || "Unknown Track";
+                    const currentArtist = data.now_playing.artist || "Unknown Artist"; 
+                    const trackIdx = data.now_playing.index || "?"; 
+                    const trackDur = data.now_playing.duration || "--:--"; // 🚨 NEW
+
                     document.getElementById('np_song').innerText = currentSongTitle;
                     document.getElementById('fs_song').innerText = currentSongTitle.toUpperCase();
+                    
+                    document.getElementById('np_artist').innerText = currentArtist.toUpperCase();
+                    document.getElementById('fs_artist').innerText = currentArtist.toUpperCase();
+                    document.getElementById('track_no').innerText = `TRACK ${trackIdx}`;
+                    document.getElementById('fs_track_no').innerText = `TRACK : ${trackIdx}`;
+
+                    // fitText('fs_song', 18.75);
+                    // fitText('fs_artist', 12.5);
+                    
+                    // 🚨 Inject the duration into the DOM
+                    document.querySelector('#current_track_tile .track_length').innerText = trackDur; 
                 } else {
                     currentSongTitle = "NOTHING";
                     document.getElementById('np_song').innerText = "NOTHING";
                     document.getElementById('fs_song').innerText = "NOTHING";
+                    document.getElementById('np_artist').innerText = "QUEUE A SONG, IDIOT!";
+                    document.getElementById('fs_artist').innerText = "QUEUE A SONG, IDIOT!";
+                    document.getElementById('track_no').innerText = "?";
+                    document.getElementById('fs_track_no').innerText = "TRACK : ?";
+                    document.querySelector('#current_track_tile .track_length').innerText = "--:--"; 
                 }
 
                 const qDisplay = document.getElementById('queueDisplay');
                 if (data.queue && data.queue.length > 0) {
-                    const listItems = data.queue.map((track, index) => {
-                        const t = track.title || track.Title || track.id;
-                        return `<div class="queue_item">${index + 1}. ${t}</div>`;
+                    // 🚨 Beautifully formatted queue displaying all persistent metadata
+                    const listItems = data.queue.map((track) => {
+                        const t = track.title || track.id;
+                        const a = track.artist || "Unknown";
+                        const d = track.duration || "--:--";
+                        const idx = track.index || "?";
+                        if (idx !== "?" && idx > total_songs) {
+                            total_songs = idx;
+                        }
+                        
+                        return `<div class="queue_item" style="display: flex; justify-content: space-between;">
+                                    <span><b>${idx}.</b> ${t} <span style="font-size: 0.75rem; opacity: 0.6;">by ${a}</span></span>
+                                    <span>${d}</span>
+                                </div>`;
                     }).join('');
+                    
                     qDisplay.innerHTML = listItems;
+                    document.getElementById('tracks_remaining').innerText = `OUT OF ${total_songs}`;
                 } else {
-                    qDisplay.innerHTML = `<div style="color: #888; font-size: 0.8rem;">Queue is empty.</div>`;
+                    qDisplay.innerHTML = `<div style="color: #888; font-size: 0.8rem; padding-top: 8px;">Queue is empty.</div>`;
+                    document.getElementById('tracks_remaining').innerText = `OUT OF ${total_songs}`;
                 }
             } catch (error) {}
 
@@ -521,6 +583,22 @@
             // Start the new timer (minutes * 60 seconds * 1000 ms)
             bgTimerId = setInterval(cycleBackground, seconds * 1000);
         });
+
+        // // --- TEXT AUTO-FIT LOGIC ---
+        // function fitText(elementId, defaultVh) {
+        //     const el = document.getElementById(elementId);
+        //     const container = document.getElementById('full_scr_details');
+            
+        //     // Reset to the default massive size first
+        //     let currentSize = defaultVh;
+        //     el.style.fontSize = `${currentSize}vh`;
+
+        //     // While the text is wider than the container, shrink it
+        //     while (el.scrollWidth > container.clientWidth && currentSize > 2) {
+        //         currentSize -= 0.5; // Shrink by 0.5vh increments
+        //         el.style.fontSize = `${currentSize}vh`;
+        //     }
+        // }
 
     </script>
 </body>
