@@ -12,15 +12,19 @@ type Track struct {
 	ID       string `json:"id"`
 	Title    string `json:"title"`
 	Filepath string `json:"filepath"`
+	Artist   string `json:"artist"`
+	Index    int    `json:"index"`
+	Duration string `json:"duration"`
 }
 
 var (
-	queue        []Track
-	mu           sync.Mutex // Protects the music queue and player state
-	logMu        sync.Mutex // Protects ONLY the logs (Prevents Deadlocks!)
-	currentCmd   *exec.Cmd
-	currentTrack *Track
-	ServerLogs   []string
+	queue            []Track
+	mu               sync.Mutex // Protects the music queue and player state
+	logMu            sync.Mutex // Protects ONLY the logs (Prevents Deadlocks!)
+	currentCmd       *exec.Cmd
+	currentTrack     *Track
+	ServerLogs       []string
+	globalTrackIndex = 1
 )
 
 // --- UNIFIED LOGGING SYSTEM ---
@@ -48,10 +52,13 @@ func GetLogs() []string {
 // --- DJ & QUEUE LOGIC ---
 func AddToQueue(track Track) {
 	mu.Lock()
+	track.Index = globalTrackIndex // Stamp the track with its permanent number
+	globalTrackIndex++             // Increment for the next song
 	queue = append(queue, track)
 	mu.Unlock()
 
-	WebLog("🎵 Added to queue: %s (Total: %d)", track.Title, len(queue))
+	// 🚨 TRACER 5: Did the struct survive entering the queue?
+	WebLog("📦 [Step 5: Queue] Added: [%d] %s by %s (Dur: %s)", track.Index, track.Title, track.Artist, track.Duration)
 }
 
 func StartDJ() {
@@ -69,6 +76,9 @@ func StartDJ() {
 		nowPlaying := queue[0]
 		queue = queue[1:]
 		currentTrack = &nowPlaying
+
+		// 🚨 TRACER 6: Did the metadata survive until playback?
+		WebLog("▶️ [Step 6: Player] Popped for playback: %s by %s", nowPlaying.Title, nowPlaying.Artist)
 
 		// Boot mpv
 		currentCmd = exec.Command("mpv",

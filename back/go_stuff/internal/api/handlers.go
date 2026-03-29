@@ -48,7 +48,7 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	player.WebLog("📲 UI Request: Search %s for '%s'", strings.ToUpper(source), query)
+	player.WebLog("🔎 Search Request: %s for '%s'", strings.ToUpper(source), query)
 
 	var results []map[string]string
 
@@ -105,10 +105,21 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 // 4. Download that bitch.
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	targetURL := r.URL.Query().Get("url")
-	trackTitle := r.URL.Query().Get("title") // Grabbing the real title!
+	trackTitle := r.URL.Query().Get("title")
+	trackArtist := r.URL.Query().Get("artist")
+	trackDuration := r.URL.Query().Get("duration")
+
+	// 🚨 TRACER 4: Did Go receive the URL parameters?
+	player.WebLog("📥 [Step 4: Go Handler] Received params -> Title: '%s' | Artist: '%s' | Dur: '%s'", trackTitle, trackArtist, trackDuration)
 
 	if trackTitle == "" || trackTitle == "undefined" {
 		trackTitle = "Unknown Track"
+	}
+	if trackArtist == "" || trackArtist == "undefined" {
+		trackArtist = "Unknown Artist"
+	}
+	if trackDuration == "" || trackDuration == "undefined" {
+		trackDuration = "--:--"
 	}
 
 	trackID := r.URL.Query().Get("v")
@@ -128,20 +139,21 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		player.WebLog("📥 Downloading: %s", trackTitle)
-
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			player.WebLog("🚨 Download failed: %v\n📜 RAW ERROR:\n%s", err, string(output))
 			return
 		}
-
 		player.WebLog("✅ Download complete! Sending to DJ...")
 
 		newTrack := player.Track{
 			ID:       trackID,
-			Title:    trackTitle, // 🚨 The Ghost is dead. Real title is injected here.
+			Title:    trackTitle,
+			Artist:   trackArtist,
+			Duration: trackDuration, // 🚨 Pass it to the struct here!
 			Filepath: fmt.Sprintf("sessions/%s.mp3", trackID),
 		}
+		player.WebLog("Song details:\n\tID: %s\n\tTitle: %s\n\tFilePath: %s\n\tArtist: %s\n\tDuration: %s\n\tIndex: %d", newTrack.ID, newTrack.Title, newTrack.Filepath, newTrack.Artist, newTrack.Duration, newTrack.Index)
 		player.AddToQueue(newTrack)
 	}()
 
