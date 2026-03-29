@@ -131,6 +131,7 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	// 🚨 THE DISGUISE & COOKIE BYPASS
 	cmd := exec.Command("yt-dlp",
 		"--cookies", "cookies.txt",
+		"--js-runtimes", "node",
 		"-x",
 		"--audio-format", "mp3",
 		"-o", "sessions/%(id)s.%(ext)s",
