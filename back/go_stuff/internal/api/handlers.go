@@ -109,8 +109,8 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	trackArtist := r.URL.Query().Get("artist")
 	trackDuration := r.URL.Query().Get("duration")
 
-	// 🚨 TRACER 4: Did Go receive the URL parameters?
-	player.WebLog("📥 [Step 4: Go Handler] Received params -> Title: '%s' | Artist: '%s' | Dur: '%s'", trackTitle, trackArtist, trackDuration)
+	// 🚨 TRACER 3: Did Go receive the URL parameters?
+	player.WebLog("📥 [Step 3: Go Handler] Received params -> Title: '%s' | Artist: '%s' | Dur: '%s'", trackTitle, trackArtist, trackDuration)
 
 	if trackTitle == "" || trackTitle == "undefined" {
 		trackTitle = "Unknown Track"

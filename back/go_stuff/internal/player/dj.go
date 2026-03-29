@@ -3,6 +3,7 @@ package player
 import (
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -77,8 +78,11 @@ func StartDJ() {
 		queue = queue[1:]
 		currentTrack = &nowPlaying
 
-		// 🚨 TRACER 6: Did the metadata survive until playback?
-		WebLog("▶️ [Step 6: Player] Popped for playback: %s by %s", nowPlaying.Title, nowPlaying.Artist)
+		// Remove ghost socket so that mpv doesn't get confused.
+		os.Remove("tmp/vemenichy.sock")
+
+		// 🚨 TRACER 4: Did the metadata survive until playback?
+		WebLog("▶️ [Step 4: Player] Popped for playback: %s by %s", nowPlaying.Title, nowPlaying.Artist)
 
 		// Boot mpv
 		currentCmd = exec.Command("mpv",
@@ -118,7 +122,7 @@ func TogglePause() {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if currentCmd != nil && currentCmd.Process != nil {
+	if currentCmd != nil {
 		sendIPC("cycle pause")
 	} else {
 		WebLog("⚠️ Attempted pause, but nothing is playing.")
@@ -154,11 +158,19 @@ func GetQueue() []Track {
 }
 
 func sendIPC(cmd string) {
+	//To check if mpv is running.
 	conn, err := net.Dial("unix", "/tmp/vemenichy.sock")
 	if err != nil {
 		WebLog("🚨 IPC connection failed: %v", err)
 		return
 	}
 	defer conn.Close()
-	conn.Write([]byte(cmd + "\n"))
+
+	// To check if mpv accepted the command.
+	_, err = conn.Write([]byte(cmd + "\n"))
+	if err != nil {
+		WebLog("🚨 IPC Write failed: %v", err)
+	} else {
+		WebLog("IPC Pipe Success: Send '%s'", cmd)
+	}
 }
