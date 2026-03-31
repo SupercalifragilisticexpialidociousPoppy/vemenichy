@@ -53,8 +53,21 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	var results []map[string]string
 
 	if source == "sc" {
-		// (Keep your existing SC logic here, just change fmt.Printf to player.WebLog for errors)
-		cmd := exec.Command("yt-dlp", "--dump-json", "--flat-playlist", "--skip-download", "scsearch10:"+query)
+		// Get global track index.
+
+		// Clean json dump:
+		// Windows: yt-dlp --skip-download --flat-playlist --print "{\`"title\`": %(title)j, \`"uploader\`": %(uploader)j, \`"duration\`": %(duration)j, \`"webpage_url\`": %(webpage_url)j}" "scsearch10:troyboi afterhours"
+		//Linux: yt-dlp --skip-download --flat-playlist --print '{"title": %(title)j, "uploader": %(uploader)j, "duration": %(duration)j, "webpage_url": %(webpage_url)j}' "scsearch10:troyboi afterhours"
+
+		printFormat := `{"title": %(title)j, "uploader": %(uploader)j, "duration": %(duration)j, "webpage_url": %(webpage_url)j, "id": %(id)j}`
+		searchArg := "scsearch10:" + query
+
+		cmd := exec.Command("yt-dlp",
+			"--skip-download",
+			"--flat-playlist",
+			"--print", printFormat,
+			searchArg,
+		)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			player.WebLog("🚨 YT-DLP Error: %v", err)
@@ -72,7 +85,7 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 				Uploader string  `json:"uploader"`
 				Duration float64 `json:"duration"`
 				ID       string  `json:"id"`
-				URL      string  `json:"url"`
+				URL      string  `json:"webpage_url"`
 			}
 			if err := json.Unmarshal([]byte(line), &trackData); err != nil {
 				continue
@@ -108,9 +121,8 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	trackTitle := r.URL.Query().Get("title")
 	trackArtist := r.URL.Query().Get("artist")
 	trackDuration := r.URL.Query().Get("duration")
-
-	// 🚨 TRACER 3: Did Go receive the URL parameters?
-	player.WebLog("📥 [Step 3: Go Handler] Received params -> Title: '%s' | Artist: '%s' | Dur: '%s'", trackTitle, trackArtist, trackDuration)
+	trackSource := r.URL.Query().Get("source")
+	trackID := r.URL.Query().Get("id")
 
 	if trackTitle == "" || trackTitle == "undefined" {
 		trackTitle = "Unknown Track"
@@ -122,21 +134,34 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		trackDuration = "--:--"
 	}
 
-	trackID := r.URL.Query().Get("v")
-	if trackID == "" && strings.Contains(targetURL, "v=") {
+	// Fallback just in case the UI fails to send an ID for YouTube
+	if trackID == "" && trackSource == "yt" && strings.Contains(targetURL, "v=") {
 		parts := strings.Split(targetURL, "v=")
 		trackID = strings.Split(parts[1], "&")[0]
 	}
 
-	// 🚨 THE DISGUISE & COOKIE BYPASS
-	cmd := exec.Command("yt-dlp",
-		"--cookies", "cookies.txt",
-		"--js-runtimes", "node",
-		"-x",
-		"--audio-format", "mp3",
-		"-o", "sessions/%(id)s.%(ext)s",
-		targetURL,
-	)
+	player.WebLog("📥 [Step 3: Handler] Source: %s | Title: '%s' | ID: '%s'", strings.ToUpper(trackSource), trackTitle, trackID)
+
+	var cmd *exec.Cmd
+
+	if trackSource == "sc" {
+		cmd = exec.Command("yt-dlp",
+			"-x",
+			"--audio-format", "mp3",
+			"-o", "sessions/%(id)s.%(ext)s",
+			targetURL,
+		)
+	} else {
+		// To download age-restricted audio, YT DRM needs us to solve JS puzzles. cookies.txt and nodejs required for this.
+		cmd = exec.Command("yt-dlp",
+			"--cookies", "cookies.txt",
+			"--js-runtimes", "node",
+			"-x",
+			"--audio-format", "mp3",
+			"-o", "sessions/%(id)s.%(ext)s",
+			targetURL,
+		)
+	}
 
 	go func() {
 		player.WebLog("📥 Downloading: %s", trackTitle)
@@ -151,10 +176,10 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 			ID:       trackID,
 			Title:    trackTitle,
 			Artist:   trackArtist,
-			Duration: trackDuration, // 🚨 Pass it to the struct here!
+			Duration: trackDuration,
 			Filepath: fmt.Sprintf("sessions/%s.mp3", trackID),
 		}
-		player.WebLog("Song details:\n\tID: %s\n\tTitle: %s\n\tFilePath: %s\n\tArtist: %s\n\tDuration: %s\n\tIndex: %d", newTrack.ID, newTrack.Title, newTrack.Filepath, newTrack.Artist, newTrack.Duration, newTrack.Index)
+
 		player.AddToQueue(newTrack)
 	}()
 

@@ -65,7 +65,7 @@
                 <input type="text" id="searchInput" placeholder="/SEARCH">
                 <div id="search_sources">
                     <button class="source-btn" onclick="searchMusic('yt')">YOUTUBE</button>
-                    <button class="source-btn"  style="opacity: 0.6; cursor: not-allowed;" onclick="searchMusic('sc')">SOUNDCLOUD</button>
+                    <button class="source-btn" onclick="searchMusic('sc')">SOUNDCLOUD</button>
                 </div>
             </div>
             <div id="resultsContainer"></div>
@@ -171,7 +171,7 @@
                     const title = track.title || track.fulltitle || "Unknown Title";
                     const artist = track.artist || track.uploader || "Unknown Artist";
                     const duration = track.duration || "--:--";
-                    const url = track.webpage_url || `https://www.youtube.com/watch?v=${track.id}`;
+                    const url = track.url || `https://www.youtube.com/watch?v=${track.id}`;
 
                     const card = document.createElement('div');
                     card.className = 'result-card';
@@ -190,7 +190,7 @@
                     const playBtn = document.createElement('button');
                     playBtn.innerText = "⬇️ QUEUE";
                     console.log("🔍 [Step 1: Search Result] Parsed Data:", { title, artist, duration, url });
-                    playBtn.onclick = () => downloadAndPlay(playBtn, url, title, artist, duration); 
+                    playBtn.onclick = () => downloadAndPlay(playBtn, url, title, artist, duration, track.id, source); 
 
                     // Attach the combined info and the button to the card
                     card.appendChild(infoSpan);
@@ -203,20 +203,19 @@
             }
         }
 
-        async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist, trackDuration) {
+async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist, trackDuration, trackId, source) {
             buttonElement.disabled = true;
             buttonElement.innerText = "⏳...";
+            
+            console.log("🚀 [Step 2] Sending to Go:", { title: trackTitle, artist: trackArtist, duration: trackDuration, id: trackId, source: source });
+            
             try {
                 const safeUrl = encodeURIComponent(trackUrl);
-                const safeTitle = encodeURIComponent(trackTitle);
-                const safeArtist = encodeURIComponent(trackArtist); 
-                const safeDuration = encodeURIComponent(trackDuration);
+                const safeTitle = encodeURIComponent(trackTitle || "Unknown");
+                const safeArtist = encodeURIComponent(trackArtist || "Unknown"); 
+                const safeDuration = encodeURIComponent(trackDuration || "--:--"); 
                 
-                console.log("🚀 [Step 2: Fetch Call] Sending to Go:", { 
-                    title: trackTitle, artist: trackArtist, duration: trackDuration 
-                });
-
-                await fetch(`/download?url=${safeUrl}&title=${safeTitle}&artist=${safeArtist}&duration=${safeDuration}`);
+                await fetch(`/download?url=${safeUrl}&title=${safeTitle}&artist=${safeArtist}&duration=${safeDuration}&id=${trackId}&source=${source}`);
                 buttonElement.innerText = "✅";
             } catch (error) {
                 buttonElement.innerText = "❌";
