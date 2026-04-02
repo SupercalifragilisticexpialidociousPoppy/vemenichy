@@ -43,10 +43,6 @@
                     <button class="control_btn" onclick="changeVolume('down')">🔉 VOL -</button>
                     <button class="control_btn" onclick="changeVolume('up')">🔊 VOL +</button>
                 </div>
-                <!-- <div class="controls_line">
-                    <button class="control_btn" style="opacity: 0.3; cursor: not-allowed;">SWAP (WIP)</button>
-                    <button class="control_btn" style="opacity: 0.3; cursor: not-allowed;">DELETE (WIP)</button>
-                </div> -->
             </div>
         </div>
 
@@ -78,15 +74,12 @@
         <div id="shortcuts_grid">
             <div class="shortcut-item"><span>K</span> Play/Pause</div>
             <div class="shortcut-item"><span>V</span> Volume</div>
-            <!-- <div class="shortcut-item"><span>Q</span> Swap Queue</div> -->
             <div class="shortcut-item"><span>F</span> Fullscreen</div>
             <div class="shortcut-item"><span>/</span> Search</div>
             <div class="shortcut-item"><span>N</span> Skip</div>
             <div class="shortcut-item"><span>M</span> Mute</div>
             <div class="shortcut-item"><span>B</span> Change Background</div>
-            <!-- <div class="shortcut-item"><span>X</span> Delete Track</div> -->            
             <div class="shortcut-item"><span>S</span> Settings</div>
-            
         </div>
     </div>
 
@@ -101,7 +94,7 @@
         <div id="pause_overlay">PAUSED</div>
     </div>
 
-        <div id="settings_overlay" class="floating_menu" style="width: 450px;">
+    <div id="settings_overlay" class="floating_menu" style="width: 450px;">
         <div class="settings_header">SYSTEM SETTINGS</div>
         
         <div class="settings_section">
@@ -112,9 +105,10 @@
 
         <div class="settings_section">
             <div class="settings_title">2. THEME</div>
-            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                <button class="control_btn" style="margin: 0; background: #fafafa; color: #111111;">LIGHT (ACTIVE)</button>
-                <button class="control_btn" style="margin: 0; opacity: 0.4; cursor: not-allowed;" disabled>DARK (WIP)</button>
+            <div id="theme_buttons" style="display: flex; gap: 10px; margin-bottom: 12px;">
+                <button class="control_btn" style="margin: 0;" onclick="setTheme('white')">WHITE (ACTIVE)</button>
+                <button class="control_btn" style="margin: 0; opacity: 0.5;" onclick="setTheme('black')">BLACK</button>
+                <button class="control_btn" style="margin: 0; opacity: 0.5;" onclick="setTheme('colours')">COLOURS</button>
             </div>
             <label>BG Cycle Time (seconds): <input type="number" id="setting_bg_time" value="300" min="1"></label>
         </div>
@@ -147,7 +141,7 @@
         let currentVol = 100;
         let cachedVol = 100;
         let currentSongTitle = "NOTHING";
-        let bigTimerId = null;
+        let bgTimerId = null; 
         let total_songs = 0;
 
         // Prevent shortcuts from firing when typing in the search box
@@ -203,7 +197,7 @@
             }
         }
 
-async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist, trackDuration, trackId, source) {
+        async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist, trackDuration, trackId, source) {
             buttonElement.disabled = true;
             buttonElement.innerText = "⏳...";
             
@@ -229,8 +223,10 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
             await fetch('/pause');
             updateFullscreenUI();
             if (stream_paused) {
-                document.querySelector('now_play').innerText = "NOW PAUSED";
-            } else {document.querySelector('now_play').innerText = "NOW PLAYING";}
+                document.querySelector('.now_play').innerText = "NOW PAUSED";
+            } else {
+                document.querySelector('.now_play').innerText = "NOW PLAYING";
+            }
         }
 
         async function skipTrack() {
@@ -250,14 +246,11 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
                 const response = await fetch('/status');
                 const data = await response.json();
                 
-                // 🚨 TRACER 6: (Warning: This prints every 2 seconds)
-                // console.log("📥 [Step 6: Status Heartbeat]", data);     
-
                 if (data.now_playing) {
                     currentSongTitle = data.now_playing.title || "Unknown Track";
                     const currentArtist = data.now_playing.artist || "Unknown Artist"; 
                     const trackIdx = data.now_playing.index || "?"; 
-                    const trackDur = data.now_playing.duration || "--:--"; // 🚨 NEW
+                    const trackDur = data.now_playing.duration || "--:--"; 
 
                     document.getElementById('np_song').innerText = currentSongTitle;
                     document.getElementById('fs_song').innerText = currentSongTitle.toUpperCase();
@@ -266,11 +259,8 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
                     document.getElementById('fs_artist').innerText = currentArtist.toUpperCase();
                     document.getElementById('track_no').innerText = `TRACK ${trackIdx}`;
                     document.getElementById('fs_track_no').innerText = `TRACK : ${trackIdx}`;
-
-                    // fitText('fs_song', 18.75);
-                    // fitText('fs_artist', 12.5);
                     
-                    // 🚨 Inject the duration into the DOM
+                    // Inject the duration into the DOM
                     document.querySelector('#current_track_tile .track_length').innerText = trackDur; 
                 } else {
                     currentSongTitle = "NOTHING";
@@ -285,7 +275,6 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
 
                 const qDisplay = document.getElementById('queueDisplay');
                 if (data.queue && data.queue.length > 0) {
-                    // 🚨 Beautifully formatted queue displaying all persistent metadata
                     const listItems = data.queue.map((track) => {
                         const t = track.title || track.id;
                         const a = track.artist || "Unknown";
@@ -386,7 +375,6 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
             } else if (key === 'n') {
                 skipTrack();
             } else if (key === 'v') {
-                // 1. Stop the browser from actually typing the letter "v" into the box
                 event.preventDefault(); 
                 volume_menu_open = !volume_menu_open;
                 volume_menu_open ? openVolumeMenu() : closeVolumeMenu();
@@ -398,27 +386,22 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
                 cycleBackground();
             } else if (key === 'm') {
                 player_muted = !player_muted;
-                currentVol = player_muted > 0 ? 0 : cachedVol;
+                currentVol = player_muted ? 0 : cachedVol;
                 fetch(`/volume?v=${currentVol}`)
             } else if (key === 's') {
                 event.preventDefault();
                 document.getElementById('settings_overlay').style.display = 'flex';
             } else if (key === '/') {
-                // 1. Stop the browser from actually typing "/" into the box
                 event.preventDefault(); 
                 
                 const searchCell = document.querySelector('.search_api');
                 const searchInput = document.getElementById('searchInput');
 
-                // 2. Unlock all other cells to keep the UI clean
                 document.querySelectorAll('.grid_cell').forEach(cell => {
                     cell.classList.remove('locked');
                 });
 
-                // 3. Lock the search cell so it snaps into view
                 searchCell.classList.add('locked');
-
-                // 4. Drop the cursor right into the input
                 searchInput.focus();
             } else if (key === 'escape') {
                 document.getElementById('settings_overlay').style.display = 'none';
@@ -435,25 +418,26 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
         setInterval(fetchStatus, 2000);
         fetchStatus();
 
-        // --- 6. BACKGROUND CAROUSEL LOGIC (JSON Powered) ---
+        // --- 6. BACKGROUND CAROUSEL & THEME LOGIC ---
         let backgrounds = [];
         let currentBgIndex = 0;
-
-        // Fetch the JSON file when the page loads
-        async function loadCarousel() {
+        let currentTheme = 'white';
+        // Fetch the JSON file dynamically based on the active theme
+        async function loadCarousel(themeFolder) {
             try {
-                // Tells the Go server to hand over the JSON file
-                const response = await fetch('themes/white/carousel.json');
+                // Fetch from the specific theme folder
+                const response = await fetch(`themes/${themeFolder}/carousel.json`);
                 backgrounds = await response.json();
                 
-                // If it loaded successfully, set the first image instantly
+                currentBgIndex = 0; // Reset to the first image
+                
                 if (backgrounds.length > 0) {
                     applyBackground();
-                    // Start the 5-minute auto-rotation timer
-                    setInterval(cycleBackground, 300000);
+                } else {
+                    document.body.style.backgroundImage = "none";
                 }
             } catch (error) {
-                console.error("🚨 Failed to load carousel config:", error);
+                console.error(`🚨 Failed to load carousel for ${themeFolder}:`, error);
             }
         }
 
@@ -461,41 +445,73 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
             if (backgrounds.length === 0) return;
             const bgData = backgrounds[currentBgIndex];
             
-            // Assuming your JSON only has the filename, we prepend the folder path here.
-            // (If you change your folder structure later, you only have to change it here!)
-            document.body.style.backgroundImage = `url('themes/white/${bgData.path}')`;
+            // 1. Set the background image (dynamically routing to the correct folder)
+            document.body.style.backgroundImage = `url('themes/${bgData.path}')`;
+            document.body.style.backgroundPosition = bgData["background-position"] || "center";
             
-            // Apply the custom background alignment from your JSON
-            document.body.style.backgroundPosition = bgData["background-position"];
+            // 2. Set the Fullscreen Solid Color from the JSON "theme" attribute
+            if (bgData.theme) {
+                document.getElementById('full_scr').style.backgroundColor = bgData.theme;
+            } else {
+                // Fallback just in case
+                document.getElementById('full_scr').style.backgroundColor = currentTheme === 'white' ? '#ffffff' : '#111111';
+            }
         }
 
         function cycleBackground() {
-            // Move to the next index, loop back to 0 at the end
+            if (backgrounds.length === 0) return;
             currentBgIndex = (currentBgIndex + 1) % backgrounds.length;
             applyBackground();
         }
 
-        loadCarousel().then(() => {
+        // --- THEME SWITCHER FUNCTION ---
+        function setTheme(selectedTheme) {
+            currentTheme = selectedTheme;
+
+            // 1. Swap the CSS classes on the body to trigger the styling overrides
+            document.body.classList.remove('theme-white', 'theme-black', 'theme-colours');
+            document.body.classList.add(`theme-${selectedTheme}`);
+
+            // 2. Update the Settings UI Buttons
+            const buttons = document.querySelectorAll('#theme_buttons .control_btn');
+            buttons.forEach(btn => {
+                btn.style.opacity = "0.5";
+                
+                // Clean off the "(ACTIVE)" string if it exists
+                let baseText = btn.innerText.replace(' (ACTIVE)', '').trim();
+                
+                // Highlight the active one
+                if (baseText.toLowerCase() === selectedTheme) {
+                    btn.style.opacity = "1";
+                    btn.innerText = baseText + " (ACTIVE)";
+                } else {
+                    btn.innerText = baseText;
+                }
+            });
+
+            // 3. Load the new JSON configuration for the chosen theme
+            loadCarousel(currentTheme);
+        }
+
+        // Initialize default state on page load
+        document.body.classList.add('theme-white');
+        loadCarousel(currentTheme).then(() => {
             if (backgrounds.length > 0) {
-                // Default to 5 minutes
-                bgTimerId = setInterval(cycleBackground, 300000);
+                let initialTime = parseInt(document.getElementById('setting_bg_time').value, 10) || 300;
+                bgTimerId = setInterval(cycleBackground, initialTime * 1000);
             }
         });
 
         // --- 7. QOL: CLICK-TO-LOCK UI ---
         document.addEventListener('click', function(event) {
-            // Check if the click happened anywhere inside one of our 3 grid cells
             const clickedCell = event.target.closest('.grid_cell');
 
-            // 1. Unlock everything: Remove the 'locked' class from ALL cells
             document.querySelectorAll('.grid_cell').forEach(cell => {
-                // Keep it locked if it's the one we just clicked!
                 if (cell !== clickedCell) {
                     cell.classList.remove('locked');
                 }
             });
 
-            // 2. Lock the active cell: If we clicked inside a cell, force it to stay open
             if (clickedCell) {
                 clickedCell.classList.add('locked');
             }
@@ -507,38 +523,29 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
             const statusText = document.getElementById('vol_status');
             const input = document.getElementById('vol_input');
 
-            // Update the text to reflect current state
             statusText.innerText = `MUTED: ${player_muted} | CURRENT: ${currentVol} | CACHED: ${cachedVol}`;
-            input.value = ''; // Clear old numbers
+            input.value = ''; 
             menu.style.display = 'flex';
-
-            // 🚨 THE MAGIC TRICK: Force the cursor into the box instantly
             input.focus();
         }
 
         function closeVolumeMenu() {
             document.getElementById('volume_overlay').style.display = 'none';
             document.getElementById('vol_error').style.display = 'none';
-            document.getElementById('vol_input').blur(); // Remove focus
+            document.getElementById('vol_input').blur(); 
         }
 
-        // Listen for the Enter key specifically inside the volume input box
         document.getElementById('vol_input').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 const val = parseInt(this.value, 10);
 
-                // Validation Check
                 if (isNaN(val) || val < 0 || val > 100) {
                     const errorMenu = document.getElementById('vol_error');
-
                     errorMenu.style.display = 'flex';
-                    
-                    // Hide the error after 1 seconds
                     setTimeout(() => {
                         errorMenu.style.display = 'none';
                     }, 1000);
                 } else {
-                    // Success! Apply the logic.
                     cachedVol = val;
                     currentVol = player_muted ? 0 : cachedVol;
                     volume_menu_open = !volume_menu_open;
@@ -549,8 +556,6 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
         });
 
         // --- 9. SETTINGS MENU LOGIC ---
-        
-        // Layout: Force Grid Visible
         document.getElementById('setting_force_grid').addEventListener('change', function(e) {
             if (e.target.checked) {
                 document.body.classList.add('force-grid');
@@ -559,7 +564,6 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
             }
         });
 
-        // Layout: Hide Logs
         document.getElementById('setting_hide_logs').addEventListener('change', function(e) {
             if (e.target.checked) {
                 document.body.classList.add('hide-logs');
@@ -568,7 +572,6 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
             }
         });
 
-        // Theme: Custom Background Timer
         document.getElementById('setting_bg_time').addEventListener('change', function(e) {
             let seconds = parseInt(e.target.value, 10);
             if (isNaN(seconds) || seconds < 1) {
@@ -576,28 +579,9 @@ async function downloadAndPlay(buttonElement, trackUrl, trackTitle, trackArtist,
                 e.target.value = 1;
             }
             
-            // Clear the old timer
             if (bgTimerId) clearInterval(bgTimerId);
-            
-            // Start the new timer (minutes * 60 seconds * 1000 ms)
             bgTimerId = setInterval(cycleBackground, seconds * 1000);
         });
-
-        // // --- TEXT AUTO-FIT LOGIC ---
-        // function fitText(elementId, defaultVh) {
-        //     const el = document.getElementById(elementId);
-        //     const container = document.getElementById('full_scr_details');
-            
-        //     // Reset to the default massive size first
-        //     let currentSize = defaultVh;
-        //     el.style.fontSize = `${currentSize}vh`;
-
-        //     // While the text is wider than the container, shrink it
-        //     while (el.scrollWidth > container.clientWidth && currentSize > 2) {
-        //         currentSize -= 0.5; // Shrink by 0.5vh increments
-        //         el.style.fontSize = `${currentSize}vh`;
-        //     }
-        // }
 
     </script>
 </body>

@@ -8,6 +8,7 @@ back/go_stuff/cookies.txt
 *.wav
 *.jpg
 *.heic
+*.png
 
 # API Keys and shit
 .env

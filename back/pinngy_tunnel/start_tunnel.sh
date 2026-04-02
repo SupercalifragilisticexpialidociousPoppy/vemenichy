@@ -6,27 +6,27 @@ TOKEN="zH8Zzzraxhu"
 
 echo "Starting Pinggy Tunnel..."
 
-# Open the tunnel using the token. 
-# ServerAliveInterval keeps the connection from falling asleep!
-ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -p 443 -R0:localhost:8080 $TOKEN@a.pinggy.io 2>&1 | while read -r line; do
-    
-    # Print the invisible background logs to the terminal just in case we need to debug
-    echo "$line"
-    
-    # Look for the line containing the HTTP link
-    if [[ "$line" == *"http://"*".pinggy.link"* ]]; then
-        
-        # Slice out ONLY the URL from the text block
-        TUNNEL_URL=$(echo "$line" | grep -o 'http://[^ ]*')
-        
-        echo "Successfully caught URL: $TUNNEL_URL"
-        
-        # Fire the payload to Discord
-        curl -H "Content-Type: application/json" \
-             -d "{\"content\": \"🎧 **Vemenichy is Online!**\nAccess Dashboard: $TUNNEL_URL\"}" \
-             $WEBHOOK_URL
-             
-        # Break the loop so it stops reading lines, but leaves the tunnel running!
-        break
+# We keep -tt to force the output, but we use a smarter catcher
+ssh -tt -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -p 443 -R0:localhost:8080 $TOKEN@a.pinggy.io 2>&1 | tr '`' '\n' | while read -r line; do
+
+    # Check if the line contains a pinggy link
+    if [[ "$line" == *"pinggy.link"* ]]; then
+
+        # 🚨 THE FIX: Strict Regex. Only extract exactly 'http://[anything].pinggy.link'
+        # We also use 'tr' to delete any invisible carriage returns that break JSON
+        TUNNEL_URL=$(echo "$line" | grep -oE 'https?://[a-zA-Z0-9.-]+\.pinggy\.link' | head -n 1 | tr -d '\r' | tr -d '\n')
+
+        # If we successfully grabbed a clean URL, fire it
+        if [ ! -z "$TUNNEL_URL" ]; then
+            echo "✅ Successfully caught clean URL: $TUNNEL_URL"
+
+            # Fire the payload to Discord
+            curl -s -H "Content-Type: application/json" \
+                 -d "{\"content\": \":cd: **Vemenichy is Online!**\nAccess Dashboard: $TUNNEL_URL\"}" \
+                 $WEBHOOK_URL
+
+            echo "🚀 Payload fired to Discord! Leaving tunnel open in background."
+            break
+        fi
     fi
 done

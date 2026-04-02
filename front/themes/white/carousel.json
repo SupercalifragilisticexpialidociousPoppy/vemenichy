@@ -1,50 +1,62 @@
 [
     {
-        "id": 1,
-        "path": "n1ck_wonders_Asuka_6.jpg",
+        "path": "white/n1ck_wonders_Asuka_6.jpg",
         "background-position": "center",
-        "theme": "#e74c3c" 
+        "theme": "#ffffff" 
     },
     {
-        "id": 2,
-        "path": "n1ck_wonders_Asuka_7.jpg",
+        "path": "white/n1ck_wonders_Asuka_7.jpg",
         "background-position": "center",
-        "theme": "#e74c3c" 
+        "theme": "#ffffff"
     },
     {
-        "id": 3,
-        "path": "n1ck_wonders_Kaworu_1.jpg",
-        "background-position": "right",
-        "theme": "#e74c3c" 
+        "path": "white/y_u_e_post3_2.jpg",
+        "background-position": "left",
+        "theme": "#ffffff"
     },
     {
-        "id": 4,
-        "path": "n1ck_wonders_Mari_1.jpg",
+        "path": "white/n1ck_wonders_Kaworu_1.jpg",
         "background-position": "right",
-        "theme": "#e74c3c" 
+        "theme": "#ffffff"
     },
     {
-        "id": 5,
-        "path": "n1ck_wonders_Rei_1.jpg",
+        "path": "white/n1ck_wonders_Mari_1.jpg",
         "background-position": "right",
-        "theme": "#e74c3c" 
+        "theme": "#ffffff"
     },
     {
-        "id": 6,
-        "path": "n1ck_wonders_Shinji_1.jpg",
-        "background-position": "right",
-        "theme": "#e74c3c" 
+        "path": "white/haruka_kobayashi___post9_2.jpg",
+        "background-position": "center",
+        "theme": "#ffffff"
     },
     {
-        "id": 7,
-        "path": "n1ck_wonders_Unit02_3.jpg",
+        "path": "white/n1ck_wonders_Rei_1.jpg",
         "background-position": "right",
-        "theme": "#e74c3c" 
+        "theme": "#ffffff"
     },
     {
-        "id": 8,
-        "path": "n1ck_wonders_Unit02_4.jpg",
+        "path": "white/n1ck_wonders_Shinji_1.jpg",
         "background-position": "right",
-        "theme": "#e74c3c" 
+        "theme": "#ffffff"
+    },
+    {
+        "path": "white/a.shipwright_post_1_2.jpg",
+        "background-position": "center",
+        "theme": "#ffffff"
+    },
+    {
+        "path": "white/n1ck_wonders_Unit02_3.jpg",
+        "background-position": "right",
+        "theme": "#ffffff"
+    },
+    {
+        "path": "white/n1ck_wonders_Unit02_4.jpg",
+        "background-position": "right",
+        "theme": "#ffffff"
+    },
+    {
+        "path": "white/amg0d1_post13_3.jpg",
+        "background-position": "left",
+        "theme": "#ffffff" 
     }
 ]
