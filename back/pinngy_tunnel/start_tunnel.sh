@@ -1,32 +1,62 @@
 #!/bin/bash
 
-# Configuration
-WEBHOOK_URL="https://discord.com/api/webhooks/1488089624344530956/dLLgsTx1ct-aVLskx7ci950CLT5cle2HTQKLa0rUMs5saXo7XgPTP8WYKln1oBiIogsL"
-TOKEN="zH8Zzzraxhu"
+# 1. Dynamically load the .env file
+ENV_FILE="$HOME/vemenichy/back/go_stuff/.env"
 
-echo "Starting Pinggy Tunnel..."
+if [ -f "$ENV_FILE" ]; then
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+else
+    echo "❌ Cannot find .env file at $ENV_FILE"
+    exit 1
+fi
 
-# We keep -tt to force the output, but we use a smarter catcher
-ssh -tt -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -p 443 -R0:localhost:8080 $TOKEN@a.pinggy.io 2>&1 | tr '`' '\n' | while read -r line; do
+# 2. Define the Cleanup Function (The "Offline" Webhook)
+cleanup() {
+    trap - EXIT SIGINT SIGTERM
 
-    # Check if the line contains a pinggy link
-    if [[ "$line" == *"pinggy.link"* ]]; then
+    echo -e "\n🛑 Script terminating! Sending offline webhook..."
 
-        # 🚨 THE FIX: Strict Regex. Only extract exactly 'http://[anything].pinggy.link'
-        # We also use 'tr' to delete any invisible carriage returns that break JSON
-        TUNNEL_URL=$(echo "$line" | grep -oE 'https?://[a-zA-Z0-9.-]+\.pinggy\.link' | head -n 1 | tr -d '\r' | tr -d '\n')
+    curl -s -H "Content-Type: application/json" \
+         -d "{\"content\": \":headstone: Vemenichy Global is offline now.\nThe Pinggy tunnel is closed.\"}" \
+         $webhookURL
 
-        # If we successfully grabbed a clean URL, fire it
+    # Ensure the background SSH process is actually killed, 
+    # just in case the user hit Ctrl+C to stop the script.
+    pkill -f "$PINGGY_TOKEN@a.pinggy.io"
+    
+    echo "Done. Goodbye!"
+    exit 0
+}
+
+# 3. SET THE TRAP
+# This watches for EXIT (natural script end), SIGINT (Ctrl+C), and SIGTERM (kill command)
+trap cleanup EXIT SIGINT SIGTERM
+
+echo "Starting Pinggy Tunnel (TUI Disabled)..."
+
+# 4. Use a flag to ensure we don't spam the "Online" webhook
+WEBHOOK_SENT=0
+
+# Removed 'break' from the loop so it intentionally hangs and monitors!
+ssh -T -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -p 443 -R0:localhost:8080 $sshToken@a.pinggy.io 2>&1 | while read -r line; do
+    
+    echo "Pinggy: $line"
+
+    if [[ "$line" == *"pinggy-free.link"* ]] && [ $WEBHOOK_SENT -eq 0 ]; then
+
+        TUNNEL_URL=$(echo "$line" | grep -oE 'https://[a-zA-Z0-9.-]+\.pinggy-free\.link' | head -n 1 | tr -d '\r' | tr -d '\n')
+
         if [ ! -z "$TUNNEL_URL" ]; then
             echo "✅ Successfully caught clean URL: $TUNNEL_URL"
 
-            # Fire the payload to Discord
             curl -s -H "Content-Type: application/json" \
-                 -d "{\"content\": \":cd: **Vemenichy is Online!**\nAccess Dashboard: $TUNNEL_URL\"}" \
-                 $WEBHOOK_URL
+                 -d "{\"content\": \":cd: **Vemenichy Global is Online!**\nAccess Dashboard: $TUNNEL_URL\nExpires in 1 hour unless killed manually.\"}" \
+                 $webhookURL
 
-            echo "🚀 Payload fired to Discord! Leaving tunnel open in background."
-            break
+            echo "🚀 Payload fired! Script is now HANGING to monitor tunnel state..."
+            
+            # Set flag to 1 so we don't send the "Online" payload again
+            WEBHOOK_SENT=1
         fi
     fi
 done

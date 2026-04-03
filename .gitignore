@@ -9,8 +9,12 @@ back/go_stuff/cookies.txt
 *.jpg
 *.heic
 *.png
+*.webp
 
-# API Keys and shit
+# API Keys, temporary files
 .env
 back/plot.md
 front/themes
+sessions
+vemenichy-bin
+themes-old
