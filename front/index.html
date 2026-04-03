@@ -43,6 +43,11 @@
                     <button class="control_btn" onclick="changeVolume('down')">🔉 VOL -</button>
                     <button class="control_btn" onclick="changeVolume('up')">🔊 VOL +</button>
                 </div>
+                <div class="controls_line">
+                    <button class="control_btn" onclick="triggerGlobal('enable')">ENABLE GLOBAL LINK</button>
+                    <button class="control_btn" onclick="triggerGlobal('disable')">DISABLE GLOBAL LINK</button>
+                </div>
+                <button class="control_btn">POWER OFF PI</button>
             </div>
         </div>
 
@@ -583,6 +588,33 @@
             bgTimerId = setInterval(cycleBackground, seconds * 1000);
         });
 
+        async function triggerGlobal(action) {
+            const pwd = prompt(`Enter password to ${action} global access:`);
+            if (!pwd) return; // User hit cancel or entered nothing
+
+            const endpoint = action === "enable" ? "/global/enable" : "/global/disable";
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: pwd })
+                });
+
+                if (response.ok) {
+                    alert(`Successfully triggered: ${action}`);
+                } else if (response.status === 401) {
+                    alert("❌ Incorrect password.");
+                } else if (response.status === 409) {
+                    alert(`⚠️ Action ignored: ${await response.text()}`); // Prints "Tunnel is already running" etc.
+                } else {
+                    alert("❌ Server error.");
+                }
+            } catch (error) {
+                console.error("Failed to reach server:", error);
+                alert("❌ Could not connect to server.");
+            }
+        }
     </script>
 </body>
 </html>

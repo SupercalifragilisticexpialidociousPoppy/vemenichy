@@ -4,12 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 	"vemenichy-server/internal/player"
 	"vemenichy-server/internal/state"
+	"vemenichy-server/internal/tunnel"
 	"vemenichy-server/pkg/youtube"
 )
+
+type GlobalReq struct {
+	Password string `json:"password"`
+}
 
 // 1. PING HANDLER (Status Check)
 func HandlePing(w http.ResponseWriter, r *http.Request) {
@@ -244,4 +250,45 @@ func HandleLogs(w http.ResponseWriter, r *http.Request) {
 	logs := player.GetLogs()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"logs": logs})
+}
+
+func HandleEnableGlobal(w http.ResponseWriter, r *http.Request) {
+	var req GlobalReq
+	json.NewDecoder(r.Body).Decode(&req)
+
+	if req.Password != os.Getenv("GLOBAL_PASSWORD") {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if already active before attempting to start
+	if tunnel.IsActive() {
+		http.Error(w, "Tunnel is already running", http.StatusConflict)
+		return
+	}
+
+	if err := tunnel.StartTunnel(); err != nil {
+		http.Error(w, "Failed to start tunnel", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func HandleDisableGlobal(w http.ResponseWriter, r *http.Request) {
+	var req GlobalReq
+	json.NewDecoder(r.Body).Decode(&req)
+
+	if req.Password != os.Getenv("GLOBAL_PASSWORD") {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if actually active before attempting to kill
+	if !tunnel.IsActive() {
+		http.Error(w, "Tunnel is not running", http.StatusConflict)
+		return
+	}
+
+	tunnel.StopTunnel()
+	w.WriteHeader(http.StatusOK)
 }
