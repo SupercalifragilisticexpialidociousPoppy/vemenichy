@@ -9,7 +9,7 @@ import (
 	"vemenichy-server/internal/api"
 	"vemenichy-server/internal/player"
 	"vemenichy-server/internal/state"
-	"vemenichy-server/internal/tunnel"
+	//"vemenichy-server/internal/tunnel"
 )
 
 func main() {
@@ -36,5 +36,6 @@ func main() {
 	}
 
 	// 3. PINNGY LINK
-	tunnel.Start() // <-- Uncomment this
+	//player.WebLog ("Attempting pinggy-link...")
+	//tunnel.Start()
 }
