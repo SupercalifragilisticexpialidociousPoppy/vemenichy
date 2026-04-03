@@ -2,51 +2,116 @@ package tunnel
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
 	"os/exec"
-	"strings"
+	"regexp"
 )
 
+var webhookURL = os.Getenv("webhookURL")
+var sshToken = os.Getenv("sshToken")
+
+// Start kicks off the Pinggy SSH tunnel in a background goroutine
 func Start() {
-	fmt.Println("🚇 Booting up global Pinggy tunnel...")
-
-	// We include the bypass flags here so it NEVER asks for your SSH passphrase
-	// and automatically accepts the host key. Perfect for headless Pi booting!
-	cmd := exec.Command("ssh",
-		"-p", "443",
-		"-R0:localhost:8080",
-		"-o", "StrictHostKeyChecking=no",
-		"-o", "PubkeyAuthentication=no",
-		"a.pinggy.io",
-	)
-
-	// 1. Attach a pipe to listen to what SSH prints to the terminal
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		fmt.Printf("🚨 Tunnel pipe failed: %v\n", err)
-		return
-	}
-
-	// 2. Start the command (Start runs it in the background, unlike Run/CombinedOutput)
-	if err := cmd.Start(); err != nil {
-		fmt.Printf("🚨 Failed to start tunnel: %v\n", err)
-		return
-	}
-
-	// 3. Launch a goroutine to scan the output text while the server keeps booting
 	go func() {
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			line := scanner.Text()
+		log.Println("[Tunnel] Starting Pinggy Tunnel...")
 
-			// Pinggy prints a lot of ASCII art, we only care about the actual URLs
-			if strings.Contains(line, "http://") || strings.Contains(line, "https://") {
-				// Strip whitespace and print it cleanly
-				fmt.Printf("🌍 GLOBAL LINK SECURED: %s\n", strings.TrimSpace(line))
+		// Set up the SSH command
+		cmd := exec.Command("ssh", "-tt", "-o", "StrictHostKeyChecking=no", "-o", "ServerAliveInterval=30", "-p", "443", "-R0:localhost:8080", sshToken+"@a.pinggy.io")
+
+		// Create a pipe to stream both stdout and stderr (equivalent to 2>&1)
+		pr, pw := io.Pipe()
+		cmd.Stdout = pw
+		cmd.Stderr = pw
+
+		// Start the SSH command
+		if err := cmd.Start(); err != nil {
+			log.Printf("[Tunnel] Failed to start SSH command: %v\n", err)
+			return
+		}
+
+		// Ensure the writer closes when the command finishes
+		go func() {
+			cmd.Wait()
+			pw.Close()
+		}()
+
+		// Set up a scanner to read the output
+		scanner := bufio.NewScanner(pr)
+
+		// Custom split function to handle newlines, carriage returns, and backticks.
+		// This mimics your bash script's: tr '`' '\n'
+		splitFunc := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+			if atEOF && len(data) == 0 {
+				return 0, nil, nil
+			}
+			if i := bytes.IndexAny(data, "\n\r`"); i >= 0 {
+				return i + 1, data[0:i], nil
+			}
+			if atEOF {
+				return len(data), data, nil
+			}
+			return 0, nil, nil
+		}
+		scanner.Split(splitFunc)
+
+		// Exact regex from your bash script
+		urlRegex := regexp.MustCompile(`https?://[a-zA-Z0-9.-]+\.pinggy\.link`)
+		webhookSent := false
+
+		// Stream the output live
+		for scanner.Scan() {
+			text := scanner.Text()
+
+			// Uncomment this line to see the raw Pinggy logs in your console for debugging:
+			// log.Printf("[Tunnel Debug] %s\n", text)
+
+			// Look for the URL and fire the webhook once
+			if !webhookSent {
+				match := urlRegex.FindString(text)
+				if match != "" {
+					log.Printf("[Tunnel] ✅ Successfully caught clean URL: %s\n", match)
+					sendWebhook(match)
+					webhookSent = true
+				}
 			}
 		}
 
-		// If the loop finishes, it means the tunnel collapsed
-		fmt.Println("⚠️ Global tunnel closed.")
+		if err := scanner.Err(); err != nil {
+			log.Printf("[Tunnel] Error reading SSH output stream: %v\n", err)
+		}
+
+		log.Println("[Tunnel] SSH command exited.")
 	}()
+}
+
+// sendWebhook handles formatting and posting the JSON payload to Discord
+func sendWebhook(tunnelURL string) {
+	payload := map[string]string{
+		"content": fmt.Sprintf(":cd: **Vemenichy is Online!**\nAccess Dashboard: %s", tunnelURL),
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("[Tunnel] Failed to marshal webhook payload: %v\n", err)
+		return
+	}
+
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[Tunnel] Failed to send webhook: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		log.Println("[Tunnel] 🚀 Payload fired to Discord!")
+	} else {
+		log.Printf("[Tunnel] Webhook returned non-200 status: %d\n", resp.StatusCode)
+	}
 }
