@@ -20,6 +20,9 @@ func NewRouter() *http.ServeMux {
 	mux.HandleFunc("/skip", HandleSkip)
 	mux.HandleFunc("/volume", HandleVolume)
 
+	mux.HandleFunc("/global/enable", HandleEnableGlobal)
+	mux.HandleFunc("/global/disable", HandleDisableGlobal)
+
 	mux.Handle("/", http.FileServer(http.Dir("../../front/")))
 
 	return mux

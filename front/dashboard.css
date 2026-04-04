@@ -431,7 +431,7 @@ input {
     box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
 }
 
-#vol_input {
+#vol_input #pwd_input {
     background: transparent;
     color: #fff;
     border: none;

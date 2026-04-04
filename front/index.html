@@ -133,8 +133,14 @@
             <input type="number" id="vol_input" min="0" max="100" placeholder="_">
         </div>
     </div>
-    
     <div id="vol_error" class="floating_menu error_menu">Volume range is [0 - 100], dumbass.</div>
+
+    <div id="password_overlay" class="floating_menu">
+        <div style="display: flex; gap: 10px; margin-top: 15px; align-items: center;">
+            <span>> ENTER NUKE CODES:</span>
+            <input type="password" id="pwd_input" placeholder="_">
+        </div>
+    </div>
 
     <script>
         // --- STATE VARIABLES ---
@@ -152,6 +158,9 @@
         // Prevent shortcuts from firing when typing in the search box
         document.getElementById('searchInput').addEventListener('focus', () => isTyping = true);
         document.getElementById('searchInput').addEventListener('blur', () => isTyping = false);
+        // As for password input.
+        document.getElementById('pwd_input').addEventListener('focus', () => isTyping = true);
+        document.getElementById('pwd_input').addEventListener('blur', () => isTyping = false);
 
         // --- 1. SEARCH & DOWNLOAD LOGIC ---
         async function searchMusic(source) {
@@ -363,6 +372,7 @@
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement) {
                 fullscreen = false; 
+                isTyping = false;
                 document.getElementById('full_scr').style.display = "none";
                 document.querySelector('.dashboard').style.display = "grid";
                 document.getElementById('header_area').style.display = "flex";
@@ -371,6 +381,10 @@
         });
 
         document.addEventListener('keydown', function(event) {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+                if (event.key !== 'Enter' && event.key !== 'Escape') return;
+            }
+            
             if (isTyping) return; 
 
             const key = event.key.toLowerCase();
@@ -413,6 +427,8 @@
 
                 if (volume_menu_open) {volume_menu_open = false;}
                 closeVolumeMenu();
+                
+                closePasswordPrompt();
 
                 document.querySelectorAll('.grid_cell').forEach(cell => {
                     cell.classList.remove('locked');
@@ -588,10 +604,43 @@
             bgTimerId = setInterval(cycleBackground, seconds * 1000);
         });
 
-        async function triggerGlobal(action) {
-            const pwd = prompt(`Enter password to ${action} global access:`);
-            if (!pwd) return; // User hit cancel or entered nothing
+        // 10. Global Link logic
+        let pendingGlobalAction = ""; // Remembers if we are enabling or disabling
 
+        function openPasswordPrompt() {
+            const menu = document.getElementById('password_overlay');
+            const input = document.getElementById('pwd_input');
+            input.value = ''; 
+            menu.style.display = 'flex';
+            input.focus();
+            isTyping = true;
+        }
+
+        function closePasswordPrompt() {
+            document.getElementById('password_overlay').style.display = 'none';
+            document.getElementById('pwd_input').blur(); 
+        }
+
+        // Step 1: The buttons call this, which just opens the menu and stores the action
+        function triggerGlobal(action) {
+            pendingGlobalAction = action;
+            openPasswordPrompt();
+        }
+
+        // Step 2: Hitting Enter triggers the actual network request
+        document.getElementById('pwd_input').addEventListener('keydown', async function(event) {
+            // event.preventDefault();
+            if (event.key === 'Enter') {
+                const pwd = this.value;
+                if (!pwd) return; // Ignore empty submits
+
+                closePasswordPrompt(); // Hide UI immediately
+                await executeGlobal(pendingGlobalAction, pwd);
+            }    
+        });
+
+        // Step 3: The actual API call
+        async function executeGlobal(action, pwd) {
             const endpoint = action === "enable" ? "/global/enable" : "/global/disable";
 
             try {
@@ -602,19 +651,21 @@
                 });
 
                 if (response.ok) {
-                    alert(`Successfully triggered: ${action}`);
+                    alert(`✅ Successfully triggered: ${action}`);
                 } else if (response.status === 401) {
                     alert("❌ Incorrect password.");
                 } else if (response.status === 409) {
-                    alert(`⚠️ Action ignored: ${await response.text()}`); // Prints "Tunnel is already running" etc.
+                    alert(`⚠️ Action ignored: ${await response.text()}`);
                 } else {
-                    alert("❌ Server error.");
+                    const errText = await response.text();
+                    alert(`❌ Server error (${response.status}): ${errText}`);
                 }
             } catch (error) {
                 console.error("Failed to reach server:", error);
                 alert("❌ Could not connect to server.");
             }
         }
+
     </script>
 </body>
 </html>
