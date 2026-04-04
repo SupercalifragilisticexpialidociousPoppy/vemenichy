@@ -2,7 +2,6 @@ package tunnel
 
 import (
 	"bufio"
-	"os"
 	"os/exec"
 	"vemenichy-server/internal/player"
 )
@@ -50,7 +49,7 @@ func StartTunnel() error {
 func StopTunnel() {
 	if tunnelCmd != nil && tunnelCmd.Process != nil && tunnelActive {
 		// os.Interrupt is the exact equivalent of hitting Ctrl+C
-		tunnelCmd.Process.Signal(os.Interrupt)
+		exec.Command("pkill", "-f", "pinggy.io").Run()
 	}
 }
 

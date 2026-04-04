@@ -23,8 +23,12 @@ func main() {
 	// 2. START THE MUSCLES (The DJ)
 	go player.StartDJ()
 
-	// 4. SETUP THE MOUTH (The HTTP Router)
+	// 3. SETUP THE MOUTH (The HTTP Router)
 	mux := api.NewRouter()
+
+	// 4. PINNGY LINK
+	player.WebLog("Attempting pinggy-link...")
+	tunnel.StartTunnel()
 
 	// 5. START THE SERVER
 	port := ":8080"
@@ -34,8 +38,4 @@ func main() {
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed: %v", err)
 	}
-
-	// 3. PINNGY LINK
-	player.WebLog("Attempting pinggy-link...")
-	tunnel.StartTunnel()
 }

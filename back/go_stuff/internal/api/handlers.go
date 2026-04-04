@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 	"vemenichy-server/internal/player"
 	"vemenichy-server/internal/state"
 	"vemenichy-server/internal/tunnel"
@@ -303,16 +304,24 @@ func HandlePowerOff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	player.WebLog ("[MAINFRAME] Initiating system shutdown...")
+
 	// Cleanly kill the tunnel so Discord gets the "Offline" webhook
+	player.WebLog ("[MAINFRAME] Checking if global tunnel is active.")
 	if tunnel.IsActive() {
+		player.WebLog ("[MAINFRAME] Closing global tunnel.")
 		tunnel.StopTunnel()
 	}
 
 	// Tell the frontend we are shutting down
 	w.WriteHeader(http.StatusOK)
+	player.WebLog ("[MAINFRAME] All processes safe to terminate.")
 
-	// Fire the shutdown script in the background so it doesn't block the HTTP response
-	go func() {
+	go func () {
+		player.WebLog("[MAINFRAME] Shutting down in 10 seconds...")
+		time.Sleep(7*time.Second)
+		player.WebLog ("[MAINFRAME] Take care of yourself.")
+		time.Sleep(3*time.Second)
 		exec.Command("bash", "../system/shutdown.sh").Run()
-	}()
+	} ()
 }

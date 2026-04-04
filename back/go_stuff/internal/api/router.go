@@ -22,7 +22,7 @@ func NewRouter() *http.ServeMux {
 
 	mux.HandleFunc("/global/enable", HandleEnableGlobal)
 	mux.HandleFunc("/global/disable", HandleDisableGlobal)
-	mux.HandleFunc("system/poweroff", HandlePowerOff)
+	mux.HandleFunc("/system/poweroff", HandlePowerOff)
 
 	mux.Handle("/", http.FileServer(http.Dir("../../front/")))
 

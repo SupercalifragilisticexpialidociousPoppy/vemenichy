@@ -20,10 +20,9 @@ cleanup() {
          -d "{\"content\": \":headstone: Vemenichy Global is offline now.\nThe Pinggy tunnel is closed.\"}" \
          $webhookURL
 
-    # Ensure the background SSH process is actually killed, 
+    # Ensure the background SSH process is actually killed,
     # just in case the user hit Ctrl+C to stop the script.
     pkill -f "$PINGGY_TOKEN@a.pinggy.io"
-    
     echo "Done. Goodbye!"
     exit 0
 }
@@ -39,7 +38,7 @@ WEBHOOK_SENT=0
 
 # Removed 'break' from the loop so it intentionally hangs and monitors!
 ssh -T -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -p 443 -R0:localhost:8080 $sshToken@a.pinggy.io 2>&1 | while read -r line; do
-    
+
     echo "Pinggy: $line"
 
     if [[ "$line" == *"pinggy-free.link"* ]] && [ $WEBHOOK_SENT -eq 0 ]; then
@@ -54,7 +53,7 @@ ssh -T -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -p 443 -R0:localhos
                  $webhookURL
 
             echo "🚀 Payload fired! Script is now HANGING to monitor tunnel state..."
-            
+
             # Set flag to 1 so we don't send the "Online" payload again
             WEBHOOK_SENT=1
         fi
