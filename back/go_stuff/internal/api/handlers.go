@@ -292,3 +292,27 @@ func HandleDisableGlobal(w http.ResponseWriter, r *http.Request) {
 	tunnel.StopTunnel()
 	w.WriteHeader(http.StatusOK)
 }
+
+// Shutdown Sequence
+func HandlePowerOff(w http.ResponseWriter, r *http.Request) {
+	var req GlobalReq
+	json.NewDecoder(r.Body).Decode(&req)
+
+	if req.Password != os.Getenv("GLOBAL_PASSWORD") {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Cleanly kill the tunnel so Discord gets the "Offline" webhook
+	if tunnel.IsActive() {
+		tunnel.StopTunnel()
+	}
+
+	// Tell the frontend we are shutting down
+	w.WriteHeader(http.StatusOK)
+
+	// Fire the shutdown script in the background so it doesn't block the HTTP response
+	go func() {
+		exec.Command("bash", "../system/shutdown.sh").Run()
+	}()
+}

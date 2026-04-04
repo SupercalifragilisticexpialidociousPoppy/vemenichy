@@ -44,10 +44,10 @@
                     <button class="control_btn" onclick="changeVolume('up')">🔊 VOL +</button>
                 </div>
                 <div class="controls_line">
-                    <button class="control_btn" onclick="triggerGlobal('enable')">ENABLE GLOBAL LINK</button>
-                    <button class="control_btn" onclick="triggerGlobal('disable')">DISABLE GLOBAL LINK</button>
+                    <button class="control_btn" onclick="triggerSecureAction('global', 'enable')">ENABLE GLOBAL</button>
+                    <button class="control_btn" onclick="triggerSecureAction('global', 'disable')">DISABLE GLOBAL</button>
                 </div>
-                <button class="control_btn">POWER OFF PI</button>
+                <button class="control_btn" onclick="triggerSecureAction('system', 'poweroff')" style="color: red;">POWER OFF PI</button>
             </div>
         </div>
 
@@ -384,7 +384,7 @@
             if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
                 if (event.key !== 'Enter' && event.key !== 'Escape') return;
             }
-            
+
             if (isTyping) return; 
 
             const key = event.key.toLowerCase();
@@ -604,8 +604,8 @@
             bgTimerId = setInterval(cycleBackground, seconds * 1000);
         });
 
-        // 10. Global Link logic
-        let pendingGlobalAction = ""; // Remembers if we are enabling or disabling
+        // 10. Global Link and poweroff logic
+        let pendingTask = { category: "", action: "" };
 
         function openPasswordPrompt() {
             const menu = document.getElementById('password_overlay');
@@ -613,7 +613,6 @@
             input.value = ''; 
             menu.style.display = 'flex';
             input.focus();
-            isTyping = true;
         }
 
         function closePasswordPrompt() {
@@ -621,25 +620,27 @@
             document.getElementById('pwd_input').blur(); 
         }
 
-        // Step 1: The buttons call this, which just opens the menu and stores the action
-        function triggerGlobal(action) {
-            pendingGlobalAction = action;
+        function triggerSecureAction(category, action) {
+            pendingTask = { category, action };
             openPasswordPrompt();
         }
 
-        // Step 2: Hitting Enter triggers the actual network request
         document.getElementById('pwd_input').addEventListener('keydown', async function(event) {
-            // event.preventDefault();
             if (event.key === 'Enter') {
                 const pwd = this.value;
-                if (!pwd) return; // Ignore empty submits
+                if (!pwd) return; 
 
-                closePasswordPrompt(); // Hide UI immediately
-                await executeGlobal(pendingGlobalAction, pwd);
+                closePasswordPrompt(); 
+                
+                if (pendingTask.category === "global") {
+                    await executeGlobal(pendingTask.action, pwd);
+                } else if (pendingTask.category === "system") {
+                    await executeSystem(pendingTask.action, pwd);
+                }
             }    
         });
 
-        // Step 3: The actual API call
+        // Global link calls.
         async function executeGlobal(action, pwd) {
             const endpoint = action === "enable" ? "/global/enable" : "/global/disable";
 
@@ -662,6 +663,29 @@
                 }
             } catch (error) {
                 console.error("Failed to reach server:", error);
+                alert("❌ Could not connect to server.");
+            }
+        }
+
+        // System call - poweroff.
+        async function executeSystem(action, pwd) {
+            const endpoint = `/system/${action}`; 
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: pwd })
+                });
+
+                if (response.ok) {
+                    alert(`🧨 System is going down for ${action}. Goodbye!`);
+                } else if (response.status === 401) {
+                    alert("❌ Incorrect nuke codes.");
+                } else {
+                    alert(`❌ Server error: ${await response.text()}`);
+                }
+            } catch (error) {
                 alert("❌ Could not connect to server.");
             }
         }
