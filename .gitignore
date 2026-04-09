@@ -2,6 +2,10 @@
 dj-server
 dj-server.exe
 back/go_stuff/cookies.txt
+back/go_stuff/main
+back/go_stuff/vemenichy-server
+back/go_stuff/internal/state
+back/go_stuff/intenral/pkg/yt-dlp
 
 # Local downloads.
 *.mp3
@@ -10,11 +14,16 @@ back/go_stuff/cookies.txt
 *.heic
 *.png
 *.webp
+*.txt
 
 # API Keys, temporary files
 .env
 back/plot.md
 front/themes
+front/randomerror@err-pi0.local
+front/design_testing
+front/fontend_requests
+front/webpage_final
 sessions
 vemenichy-bin
 themes-old
