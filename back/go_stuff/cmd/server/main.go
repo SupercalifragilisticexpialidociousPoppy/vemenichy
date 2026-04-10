@@ -32,7 +32,7 @@ func main() {
 
 	// Start the server.
 	port := ":8080"
-	player.WebLog("🚀 Vemenichy Server v0.5 started on %s\n\tReady to accept commands...", port)
+	player.WebLog("🚀 Vemenichy Server v0.9 started on %s\n\tReady to accept commands...", port)
 
 	err = http.ListenAndServe(port, mux)
 	if err != nil && err != http.ErrServerClosed {

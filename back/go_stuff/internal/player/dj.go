@@ -28,7 +28,10 @@ var (
 	globalTrackIndex = 1
 )
 
-// --- UNIFIED LOGGING SYSTEM ---
+// ========================
+//	UNIFIED LOGGING SYSTEM
+// ========================
+
 func WebLog(format string, a ...interface{}) {
 	msg := fmt.Sprintf(format, a...)
 	fmt.Println(msg) // Keep printing to the physical Pi terminal
@@ -37,7 +40,7 @@ func WebLog(format string, a ...interface{}) {
 	defer logMu.Unlock()
 
 	ServerLogs = append(ServerLogs, msg)
-	if len(ServerLogs) > 60 { // Keeps RAM perfectly safe
+	if len(ServerLogs) > 100 { // Keeps RAM perfectly safe
 		ServerLogs = ServerLogs[1:]
 	}
 }
@@ -50,7 +53,10 @@ func GetLogs() []string {
 	return logsCopy
 }
 
-// --- DJ & QUEUE LOGIC ---
+// ==================
+//  DJ & QUEUE LOGIC
+// ==================
+
 func AddToQueue(track Track) {
 	mu.Lock()
 	track.Index = globalTrackIndex // Stamp the track with its permanent number
@@ -106,7 +112,10 @@ func StartDJ() {
 	}
 }
 
-// --- IPC CONTROLS ---
+// ==============
+//  IPC CONTROLS
+// ==============
+
 func Skip() {
 	mu.Lock()
 	defer mu.Unlock()

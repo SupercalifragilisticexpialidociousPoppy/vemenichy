@@ -1,0 +1,27 @@
+[Unit]
+
+Description=Vemenichy Go Backend Server
+
+After=network-online.target
+
+Wants=network-online.target
+
+
+
+[Service]
+
+User=randomerror
+
+WorkingDirectory=/home/randomerror/vemenichy/back/go_stuff
+
+ExecStart=/home/randomerror/vemenichy/back/go_stuff/vemenichy-bin
+
+Restart=always
+
+RestartSec=5
+
+
+
+[Install]
+
+WantedBy=multi-user.target
