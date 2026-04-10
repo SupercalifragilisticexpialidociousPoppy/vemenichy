@@ -9,40 +9,19 @@ import (
 	"strings"
 	"time"
 	"vemenichy-server/internal/player"
-	"vemenichy-server/internal/state"
 	"vemenichy-server/internal/tunnel"
 	"vemenichy-server/pkg/youtube"
 )
 
+// To execute system level commands - currently handling the pinggy global tunnel and shutting down the server and the pi - directly from the UI, we've kept a password to prevent abuse.
 type GlobalReq struct {
 	Password string `json:"password"`
 }
 
-// 1. PING HANDLER (Status Check)
-func HandlePing(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
+// ====================================
+//  SEARCH HANDLER (Soundcloud, yt-dlp)
+// ====================================
 
-	state.Global.Mutex.Lock()
-	status := fmt.Sprintf(`{"status":"online", "current":"%s", "next":"%s", "preloading":%t}`,
-		state.Global.CurrentSong, state.Global.NextSong, state.Global.IsPreloading)
-	state.Global.Mutex.Unlock()
-
-	w.Write([]byte(status))
-}
-
-// 2. ADD HANDLER (Queue a song)
-func HandleAdd(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	url := r.URL.Query().Get("url")
-	if url != "" {
-		state.Global.Playlist <- url
-		w.Write([]byte(`{"status": "Added to queue"}`))
-	}
-}
-
-// 3. SEARCH HANDLER (Soundcloud yt-dlp)
 func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
@@ -60,9 +39,9 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	var results []map[string]string
 
 	if source == "sc" {
-		// Get global track index.
+		// Use yt-dlp to scrape soundcloud search.
 
-		// Clean json dump:
+		// Clean json dump to scrape manually:
 		// Windows: yt-dlp --skip-download --flat-playlist --print "{\`"title\`": %(title)j, \`"uploader\`": %(uploader)j, \`"duration\`": %(duration)j, \`"webpage_url\`": %(webpage_url)j}" "scsearch10:troyboi afterhours"
 		//Linux: yt-dlp --skip-download --flat-playlist --print '{"title": %(title)j, "uploader": %(uploader)j, "duration": %(duration)j, "webpage_url": %(webpage_url)j}' "scsearch10:troyboi afterhours"
 
@@ -107,6 +86,8 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	} else if source == "yt" {
+		// Use Youtube's search api (Google Cloud Console)
+
 		ytResults, err := youtube.Search(query)
 		if err != nil {
 			player.WebLog("🚨 YouTube API Error: %v", err)
@@ -122,7 +103,10 @@ func HandleSearch(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(results)
 }
 
-// 4. Download that bitch.
+// ======================
+//  Download that bitch!
+// ======================
+
 func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	targetURL := r.URL.Query().Get("url")
 	trackTitle := r.URL.Query().Get("title")
@@ -146,12 +130,18 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 		parts := strings.Split(targetURL, "v=")
 		trackID = strings.Split(parts[1], "&")[0]
 	}
+	// If it STILL doesn't work, terminate the process.
+	if trackID == "" {
+		player.WebLog("📥 [FATAL ERROR] Failed to get song id. Terminating download sequence...")
+		return
+	}
 
 	player.WebLog("📥 [Step 3: Handler] Source: %s | Title: '%s' | ID: '%s'", strings.ToUpper(trackSource), trackTitle, trackID)
 
 	var cmd *exec.Cmd
 
 	if trackSource == "sc" {
+		// yt-dlp scraper again, soundcloud is very cute.
 		cmd = exec.Command("yt-dlp",
 			"-x",
 			"--audio-format", "mp3",
@@ -159,7 +149,12 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 			targetURL,
 		)
 	} else {
-		// To download age-restricted audio, YT DRM needs us to solve JS puzzles. cookies.txt and nodejs required for this.
+		// Requirements: nodejs and cookies.txt
+
+		// YT DRM needs us to solve JS puzzles. nodejs required for this. You can use other things like deno or bun just fine.
+		// get node js in your environment and MAKE SURE yt-dlp can see it. This was a massive headache when trying to run this server on my new raspi - yt-dlp couldn't see nodejs's file location and therefore failed DRM's JS puzzles.
+
+		// To get age restricted audio, youtube checks if you're legit using cookies. You can extract your personal youtube accounts ccookies using browser extensions like 'Get Cookies.txt LOCALLY'
 		cmd = exec.Command("yt-dlp",
 			"--cookies", "cookies.txt",
 			"--js-runtimes", "node",
@@ -168,8 +163,13 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 			"-o", "sessions/%(id)s.%(ext)s",
 			targetURL,
 		)
+
+		// If you don't want to give your personal cookies here, use this alternate command:
+		// yt-dlp -x --audio-format mp3 -o sessions/%(id)s.%(ext)s
+		// Note that this will throw fatal errors when downloading mature songs.
 	}
 
+	// Report to frontend on how the download is going, and add a newly downloaded song to queue.
 	go func() {
 		player.WebLog("📥 Downloading: %s", trackTitle)
 		output, err := cmd.CombinedOutput()
@@ -193,6 +193,10 @@ func HandleDownload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status": "success", "message": "Download started"}`))
 }
+
+// ===================
+//  UI Controls relay
+// ===================
 
 // HandleSkip aggressively kills the current track to trigger the next one
 func HandleSkip(w http.ResponseWriter, r *http.Request) {
@@ -247,12 +251,18 @@ func HandleVolume(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// Send logs
 func HandleLogs(w http.ResponseWriter, r *http.Request) {
 	logs := player.GetLogs()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"logs": logs})
 }
 
+// =================
+//  SYSTEM COMMANDS
+// =================
+
+// Activates global pinggy tunnel.
 func HandleEnableGlobal(w http.ResponseWriter, r *http.Request) {
 	var req GlobalReq
 	json.NewDecoder(r.Body).Decode(&req)
@@ -275,6 +285,7 @@ func HandleEnableGlobal(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// Deactivate the tunnel.
 func HandleDisableGlobal(w http.ResponseWriter, r *http.Request) {
 	var req GlobalReq
 	json.NewDecoder(r.Body).Decode(&req)
@@ -304,24 +315,24 @@ func HandlePowerOff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	player.WebLog ("[MAINFRAME] Initiating system shutdown...")
+	player.WebLog("[MAINFRAME] Initiating system shutdown...")
 
 	// Cleanly kill the tunnel so Discord gets the "Offline" webhook
-	player.WebLog ("[MAINFRAME] Checking if global tunnel is active.")
+	player.WebLog("[MAINFRAME] Checking if global tunnel is active.")
 	if tunnel.IsActive() {
-		player.WebLog ("[MAINFRAME] Closing global tunnel.")
+		player.WebLog("[MAINFRAME] Closing global tunnel.")
 		tunnel.StopTunnel()
 	}
 
 	// Tell the frontend we are shutting down
 	w.WriteHeader(http.StatusOK)
-	player.WebLog ("[MAINFRAME] All processes safe to terminate.")
+	player.WebLog("[MAINFRAME] All processes safe to terminate.")
 
-	go func () {
+	go func() {
 		player.WebLog("[MAINFRAME] Shutting down in 10 seconds...")
-		time.Sleep(7*time.Second)
-		player.WebLog ("[MAINFRAME] Take care of yourself.")
-		time.Sleep(3*time.Second)
+		time.Sleep(7 * time.Second)
+		player.WebLog("[MAINFRAME] Take care of yourself.")
+		time.Sleep(3 * time.Second)
 		exec.Command("bash", "../system/shutdown.sh").Run()
-	} ()
+	}()
 }

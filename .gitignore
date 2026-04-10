@@ -1,11 +1,8 @@
 # Compiled go library
 dj-server
 dj-server.exe
-back/go_stuff/cookies.txt
 back/go_stuff/main
 back/go_stuff/vemenichy-server
-back/go_stuff/internal/state
-back/go_stuff/intenral/pkg/yt-dlp
 
 # Local downloads.
 *.mp3
@@ -27,3 +24,5 @@ front/webpage_final
 sessions
 vemenichy-bin
 themes-old
+back/go_stuff/cookies.txt
+back/go_stuff/intenral/pkg/yt-dlp

@@ -53,6 +53,7 @@ func StopTunnel() {
 	}
 }
 
+// Helper function to check if the pinggy tunnel is active. Used in other go files.
 func IsActive() bool {
 	return tunnelActive
 }

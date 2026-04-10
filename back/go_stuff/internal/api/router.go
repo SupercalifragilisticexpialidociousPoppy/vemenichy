@@ -7,8 +7,6 @@ import (
 func NewRouter() *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/ping", HandlePing)
-	mux.HandleFunc("/add", HandleAdd)
 	mux.HandleFunc("/search", HandleSearch)
 	mux.HandleFunc("/download", HandleDownload)
 

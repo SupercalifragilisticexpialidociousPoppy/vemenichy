@@ -13,24 +13,24 @@ import (
 )
 
 func main() {
-	// 1. INITIALIZE THE BRAIN
+	// Get environment variables.
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Println("\n[!] No .env file found, looking for system variables")
 	}
 	state.Initialize()
 
-	// 2. START THE MUSCLES (The DJ)
+	// Start the dj
 	go player.StartDJ()
 
-	// 3. SETUP THE MOUTH (The HTTP Router)
+	// Setup the router
 	mux := api.NewRouter()
 
-	// 4. PINNGY LINK
+	// Start the global pinggy tunnel.
 	player.WebLog("Attempting pinggy-link...")
 	tunnel.StartTunnel()
 
-	// 5. START THE SERVER
+	// Start the server.
 	port := ":8080"
 	player.WebLog("🚀 Vemenichy Server v0.5 started on %s\n\tReady to accept commands...", port)
 
@@ -38,4 +38,6 @@ func main() {
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed: %v", err)
 	}
+
+	// Adding new bootup features below http.ListenAndServe will never execute as this is an infinite loop. So have everything above it. Learned the hard way.
 }

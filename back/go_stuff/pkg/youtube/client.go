@@ -34,7 +34,10 @@ type VideoDetailsResponse struct {
 }
 
 // Search queries YouTube and formats the results for Vemenichy
+// We use two api calls, one to get video ids, and the other to get video title, channel name, duration and id - first api call doesn't give duration.
+
 func Search(query string) ([]map[string]string, error) {
+	// Go to Google Cloud Console to set this up.
 	var APIKey = os.Getenv("YOUTUBE_API_KEY")
 	// TEMPORARY DEBUG LINE:
 	// fmt.Printf("🕵️ Debug: Key length is %d\n", len(APIKey))
@@ -51,7 +54,7 @@ func Search(query string) ([]map[string]string, error) {
 	}
 	defer resp.Body.Close()
 
-	// 🚨 NEW: Trap Google's hidden HTTP errors!
+	// Trap Google's hidden HTTP errors
 	if resp.StatusCode != 200 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("Google API Error (%d): %s", resp.StatusCode, string(bodyBytes))
@@ -83,7 +86,7 @@ func Search(query string) ([]map[string]string, error) {
 	}
 	defer resp2.Body.Close()
 
-	// 🚨 NEW: Trap Google's hidden HTTP errors!
+	// Trap Google's hidden HTTP errors
 	if resp.StatusCode != 200 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("Google API Error (%d): %s", resp.StatusCode, string(bodyBytes))
@@ -111,7 +114,7 @@ func Search(query string) ([]map[string]string, error) {
 	return finalResults, nil
 }
 
-// Helper to convert "PT4M20S" to "4:20"
+// Helper to convert video duration to human-friendly format. eg "PT4M20S" to "4:20"
 func parseDuration(isoDuration string) string {
 	d, _ := time.ParseDuration(strings.ToLower(strings.Replace(isoDuration, "PT", "", 1)))
 	minutes := int(d.Minutes())

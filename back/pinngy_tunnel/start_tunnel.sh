@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# ISSUE: This thing generates a pinggy link, but that link is deactivated as soon as this file terminates.
+# SOLUTION: We hang this file to eternity. Once the shut down sequence is initiated, this file terminates, which runs the trap to close the pinggy server neatly and relay the server closed message to discord.
+
 # 1. Dynamically load the .env file
 ENV_FILE="$HOME/vemenichy/back/go_stuff/.env"
 
