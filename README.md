@@ -32,7 +32,7 @@ A music server for my raspberry pi zero 2w. I just wanted a sexy frontend to pla
 ## Software Requirements
 - Get a RasPi image on the SD Card.
   - Use the official imager for this. 
-  - Raspberry Pi OS Lite (64 bit) is sufficient.
+  - Raspberry Pi OS Lite (64-bit) is sufficient.
 - Install the following:
   - Go 1.2x, update go.mod accordingly.
   - yt-dlp (latest version, ideally keep updating this regularly)
@@ -57,10 +57,10 @@ GLOBAL_PASSWORD=<This is a password for your frontend, it is asked if you reques
 ## Installation and Setup
 ### Prerequisites
 - SSH into your RasPi
-- Install all the required softare from the above section.
+- Install all the required software mentioned in the above section.
 - Ensure that yt-dlp can see the path for nodejs, deno or bun.
 ### Cloning
-- Clone this repository. On your desired directory, run the following command. Can remove '--depth 1' tag but getting previous versions is redundant.
+- Clone this repository. In your desired directory, run the following command. Can remove '--depth 1' tag, but getting previous versions is redundant.
 ```bash 
 git clone --depth 1 https://github.com/SupercalifragilisticexpialidociousPoppy/vemenichy.git
 ```
@@ -75,7 +75,7 @@ git clone --depth 1 https://github.com/SupercalifragilisticexpialidociousPoppy/v
 - Update index.html to have your modes reflect on the Settings menu buttons (my setup uses a light, dark and colours mode, you ought to change it according to your setup), update the javascript accrodingly as well.
 - Credit the artists! Update index.html to include their names and socials.
 ### Creating a Binary File and Running
-- Go to internal directory back/go_stuff, run the following go build command to create a binary executable named 'vemenichy-bin', and making it an executable. Note that you'll need to build the binary file again if you modify the code.
+- Go to back/go_stuff, run the following go build command to create a binary executable named 'vemenichy-bin', and make it an executable. Note that you'll need to rebuild the binary every time you modify the code.
 ```bash
 go build cmd/server/main.go -o vemenichy-bin
 chmod +x vemenichy-bin
@@ -96,9 +96,9 @@ Vemenichy server starts as soon as the RasPi boots up. This removes the need to 
 sudo systemctl daemon-reload
 sudo systemctl enable vemenichy.service
 ```
-!! Ensure your filepaths are correct, the ones included in my code are according to my environment, yours will be different.
+!! Ensure your filepaths are correct; the ones included in my code are for my environment; yours will be different.
 
 ## Usage
-- For any device in the same local network as the Raspberry Pi, you can visit http://<name-of-your-raspberry-pi>.local:8080 or use the explicit IP address :8080 to open and run the server UI without the internet.
-- The server also creates a global pinggy link which can be used to access the UI outside of your local network as soon as it starts. You can comment this functionality out in back/go_stuff/cmd/server/main.go if you don't want it.
-- Do note that your local network does require internet connection to search and download songs. The local web UI doesn't use internet though.
+- For any device in the same local network as the Raspberry Pi, you can visit http://<name-of-your-raspberry-pi>.local:8080 or use the <explicit-IP-address>:8080 to open and run the server UI without the internet.
+- The server also creates a global pinggy link, which can be used to access the UI outside of your local network as soon as it starts. You can comment this functionality out in back/go_stuff/cmd/server/main.go if you don't want it.
+- Do note that your local network does require an internet connection to search and download songs. The local web UI doesn't use the internet, though.
